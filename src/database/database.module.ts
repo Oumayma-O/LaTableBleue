@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Restaurant, RestaurantSchema } from './models/restaurant.model';
-import { Caution, CautionSchema } from './models/caution.model';
-import { User, UserSchema } from './models/user.model';
-import { Review, ReviewSchema } from './models/review.model';
-import { Wallet, WalletSchema } from './models/wallet.model';
-import { Booking, BookingSchema } from './models/booking.model';
+import { User, UserSchema } from '../user/user.model';
+import { Review, ReviewSchema } from '../review/review.model';
+import { Booking, BookingSchema } from 'src/booking/booking.model';
+import { Restaurant, RestaurantSchema } from '../restaurant/restaurant.model';
+import { Caution, CautionSchema } from '../caution/caution.model';
 
 @Module({
   imports: [
@@ -13,11 +12,9 @@ import { Booking, BookingSchema } from './models/booking.model';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Review.name, schema: ReviewSchema },
-      { name: Wallet.name, schema: WalletSchema },
       { name: Booking.name, schema: BookingSchema },
       { name: Restaurant.name, schema: RestaurantSchema },
       { name: Caution.name, schema: CautionSchema },
-
     ]),
   ],
 })
