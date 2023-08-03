@@ -4,7 +4,7 @@ import { User, UserSchema } from '../user/user.model';
 import { Review, ReviewSchema } from '../review/review.model';
 import { Booking, BookingSchema } from 'src/booking/booking.model';
 import { Restaurant, RestaurantSchema } from '../restaurant/restaurant.model';
-import { Caution, CautionSchema } from '../caution/caution.model';
+import { Caution, CautionSchema } from '../restaurant/caution.model';
 
 @Module({
   imports: [

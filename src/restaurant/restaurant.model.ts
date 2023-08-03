@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Caution, CautionSchema } from '../caution/caution.model';
+import { Caution, CautionSchema } from './caution.model';
 
 export enum Cuisine {
   TUNISIAN = 'Tunisian',
