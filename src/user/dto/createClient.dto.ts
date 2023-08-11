@@ -51,18 +51,6 @@ export class CreateUserDto {
   @IsEnum(Gender)
   gender: string;
 
-  @IsNotEmpty()
-  @IsString()
-  cardNumber: string;
-
-  @IsNotEmpty()
-  @IsString()
-  expiryDate: string;
-
-  @IsNotEmpty()
-  @IsString()
-  cvv: string;
-
   @IsOptional()
   @IsString()
   address: string;
