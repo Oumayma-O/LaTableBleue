@@ -5,11 +5,6 @@ import {
   CreditCardDetailsSchema,
 } from './creditCardDetails.model';
 
-export enum ProfileType {
-  CLIENT = 'client',
-  RESTAURATEUR = 'restaurateur',
-  ADMIN = 'admin',
-}
 
 export enum Gender {
   MALE = 'male',
@@ -33,8 +28,6 @@ export class User {
   @Prop({ required: true })
   lastName: string;
 
-  @Prop({ required: false })
-  phoneNumber: string;
 
   @Prop({ required: true, unique: true })
   email: string;
@@ -42,8 +35,9 @@ export class User {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ required: true, enum: ProfileType, default: ProfileType.CLIENT })
-  role: string;
+  @Prop({ required: false })
+  phoneNumber: string;
+
 
   @Prop({ required: true, min: 18 })
   age: number;
@@ -51,8 +45,6 @@ export class User {
   @Prop({ enum: Gender, default: Gender.OTHER }) // Gender field with enum values
   gender: string;
 
-  @Prop({ type: CreditCardDetailsSchema, required: true }) // Use the CreditCardDetails schema
-  creditCardDetails: CreditCardDetails;
 
   @Prop({ type: Date, default: Date.now }) // createdAt field with a default value
   createdAt: Date;
@@ -63,8 +55,11 @@ export class User {
   @Prop({ required: false }) // Optional avatar field
   avatar?: string;
 
+  @Prop({ type: CreditCardDetailsSchema }) // Use the CreditCardDetails schema
+  creditCardDetails?: CreditCardDetails;
+
   @Prop({ type: Types.ObjectId, ref: 'Booking' }) // Array of references to the Booking model
-  bookings: Types.ObjectId[]; // Use Types.ObjectId for the array of bookings
+  bookings?: Types.ObjectId[]; // Use Types.ObjectId for the array of bookings
 
   constructor(partial: Partial<User>) {
     Object.assign(this, partial);

@@ -7,6 +7,8 @@ import { UserModule } from './user/user.module';
 import { ReviewModule } from './review/review.module';
 import { BookingModule } from './booking/booking.module';
 import { RestaurantModule } from './restaurant/restaurant.module';
+import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { RestaurantModule } from './restaurant/restaurant.module';
     ReviewModule,
     BookingModule,
     RestaurantModule,
+    AuthModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

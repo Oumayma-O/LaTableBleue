@@ -10,7 +10,7 @@ import {
   IsOptional,
   IsPhoneNumber,
 } from 'class-validator';
-import { ProfileType, Gender } from 'src/user/user.model';
+import {  Gender } from 'src/user/user.model';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -25,9 +25,6 @@ export class CreateUserDto {
   @IsString()
   lastName: string;
 
-  @IsPhoneNumber()
-  @IsOptional()
-  phoneNumber?: string;
 
   @IsNotEmpty()
   @IsEmail()
@@ -35,40 +32,30 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(6)
+  @MinLength(6, { message: 'Password should be at least 6 characters long' })
   password: string;
 
-  @IsNotEmpty()
-  @IsEnum(ProfileType)
-  role: string;
+  @IsPhoneNumber()
+  @IsOptional()
+  phoneNumber?: string;
+
 
   @IsNotEmpty()
   @IsNumber()
-  @Min(18)
+  @Min(18,{ message: 'Age should be at least 18' })
   age: number;
 
   @IsNotEmpty()
   @IsEnum(Gender)
   gender: string;
 
-  @IsNotEmpty()
-  @IsString()
-  cardNumber: string;
-
-  @IsNotEmpty()
-  @IsString()
-  expiryDate: string;
-
-  @IsNotEmpty()
-  @IsString()
-  cvv: string;
-
   @IsOptional()
   @IsString()
-  address: string;
+  address?: string;
+
 
   @IsOptional()
   @IsUrl()
   @IsString()
-  avatar: string;
+  avatar?: string;
 }
