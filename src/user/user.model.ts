@@ -42,16 +42,39 @@ export class User {
   @Prop({ required: true })
   password: string;
 
+  @Prop({ required: true })
+  confirmPassword: string;
+
   @Prop({ required: true, enum: ProfileType, default: ProfileType.CLIENT })
   role: string;
 
-  @Prop({ required: true, min: 18 })
-  age: number;
+  @Prop({ required: false, type: Date })
+  birthdate: Date;
+
+  // Getter for computed age
+  get age(): number | undefined {
+    if (!this.birthdate) return undefined;
+
+    const currentDate = new Date();
+    const birthdate = new Date(this.birthdate);
+    const age = currentDate.getFullYear() - birthdate.getFullYear();
+
+    // Adjust age if birthdate hasn't occurred yet this year
+    if (
+      currentDate.getMonth() < birthdate.getMonth() ||
+      (currentDate.getMonth() === birthdate.getMonth() &&
+        currentDate.getDate() < birthdate.getDate())
+    ) {
+      return age - 1;
+    }
+
+    return age;
+  }
 
   @Prop({ enum: Gender, default: Gender.OTHER }) // Gender field with enum values
   gender: string;
 
-  @Prop({ type: CreditCardDetailsSchema, required: true }) // Use the CreditCardDetails schema
+  @Prop({ type: CreditCardDetailsSchema, required: false }) // Use the CreditCardDetails schema
   creditCardDetails: CreditCardDetails;
 
   @Prop({ type: Date, default: Date.now }) // createdAt field with a default value

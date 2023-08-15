@@ -53,7 +53,7 @@ export enum RestaurantFeature {
   GREAT_VIEW = 'Great View',
   IN_THE_MOUNTAINS = 'In the Mountains',
   KID_FRIENDLY = 'Kid-Friendly',
-  OCEANFRONT = 'Oceanfront',
+  SEAFRONT = 'Seafront',
   ORGANIC = 'Organic',
   RESTAURANT_HOTEL = 'Restaurant Hotel',
   ROMANTIC = 'Romantic',
@@ -84,7 +84,7 @@ export class Restaurant {
   @Prop({ required: true })
   city: string;
 
-  @Prop({ default: 0 })
+  @Prop({ required: true, min: 1, max: 10 })
   rating: number;
 
   @Prop([
@@ -104,6 +104,18 @@ export class Restaurant {
     items: { name: string; price: string; description: string }[];
   }[];
 
+  @Prop({ type: [{ type: String }] })
+  menuImages: string[];
+
+  @Prop({
+    validate: function () {
+      if (!this.menu && !this.menuImages) {
+        throw new Error('Either menu or menuImages is required.');
+      }
+    },
+  })
+  isMenuOrMenuImagesRequired: string;
+
   @Prop({ type: Types.ObjectId, ref: 'User' })
   owner: Types.ObjectId;
 
@@ -117,10 +129,10 @@ export class Restaurant {
   caution: Caution;
 
   @Prop({ required: true })
-  CancellationDeadline: number;
+  cancellationDeadline: number;
 
   @Prop({ type: String })
-  website: string;
+  websiteLink: string;
 
   @Prop({ type: String })
   phoneNumber: string;
@@ -130,6 +142,12 @@ export class Restaurant {
 
   @Prop({ type: String })
   mapsLink: string;
+
+  @Prop({ type: String })
+  FbLink: string;
+
+  @Prop({ type: String })
+  InstaLink: string;
 
   @Prop({ type: Date })
   foundationDate: Date;
@@ -168,6 +186,12 @@ export class Restaurant {
 
   @Prop({ type: [{ type: String, enum: Object.values(RestaurantFeature) }] })
   features: string[];
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] })
+  tables: Types.ObjectId[]; // Array of references to Table model.
+
+  @Prop({ type: Number })
+  NumberOfTables: number;
 
   constructor(partial: Partial<Restaurant>) {
     Object.assign(this, partial);

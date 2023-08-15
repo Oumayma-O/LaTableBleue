@@ -3,18 +3,20 @@ import {
   IsEmail,
   MinLength,
   IsEnum,
-  IsNumber,
-  Min,
   IsNotEmpty,
   IsUrl,
   IsOptional,
-  IsPhoneNumber,
+  Matches,
 } from 'class-validator';
-import { ProfileType, Gender } from 'src/user/user.model';
+import { Gender, ProfileType } from 'src/user/user.model';
 
-export class CreateClientDto {
+export class CreateAdminDto {
   @IsNotEmpty()
-  @IsString()
+  @IsString({ message: 'Email must be a string' })
+  @Matches(/(?=[^\d].*)^[\w]{4,}$/, {
+    message:
+      'the first character of the username must not be a number. Username must contains at least 4 characters',
+  })
   username: string;
 
   @IsNotEmpty()
@@ -31,12 +33,20 @@ export class CreateClientDto {
 
   @IsNotEmpty()
   @IsString()
-  @MinLength(6)
+  @MinLength(8)
+  @Matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/, {
+    message:
+      'Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit',
+  })
   password: string;
 
   @IsNotEmpty()
+  @IsString()
+  confirmPassword: string;
+
+  @IsNotEmpty()
   @IsEnum(ProfileType)
-  role: string;
+  role: ProfileType.ADMIN;
 
   @IsNotEmpty()
   @IsEnum(Gender)

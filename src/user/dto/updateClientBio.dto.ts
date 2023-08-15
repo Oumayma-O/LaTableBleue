@@ -2,15 +2,20 @@ import {
   IsOptional,
   IsString,
   IsEnum,
-  IsNumber,
   IsUrl,
   IsPhoneNumber,
+  IsDate,
+  Matches,
 } from 'class-validator';
 import { Gender } from 'src/user/user.model';
 
-export class UpdateUserBioDto {
+export class UpdateClientBioDto {
   @IsOptional()
   @IsString()
+  @Matches(/(?=[^\d].*)^[\w]{4,}$/, {
+    message:
+      'the first character of the username must not be a number. Username must contains at least 4 characters',
+  })
   username?: string;
 
   @IsOptional()
@@ -21,13 +26,13 @@ export class UpdateUserBioDto {
   @IsString()
   lastName?: string;
 
-  @IsPhoneNumber()
   @IsOptional()
+  @IsPhoneNumber()
   phoneNumber?: string;
 
   @IsOptional()
-  @IsNumber()
-  age?: number;
+  @IsDate()
+  birthdate: Date;
 
   @IsOptional()
   @IsEnum(Gender)

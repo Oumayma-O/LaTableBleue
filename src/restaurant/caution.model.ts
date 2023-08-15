@@ -22,6 +22,9 @@ export class Caution {
   @Prop({ default: 1.1 })
   partySizeMultiplier: number;
 
+  @Prop({ required: true })
+  paymentDelay: number; //In hours
+
   @Prop({ type: Types.ObjectId, ref: 'Restaurant', required: true })
   restaurant: Types.ObjectId;
 

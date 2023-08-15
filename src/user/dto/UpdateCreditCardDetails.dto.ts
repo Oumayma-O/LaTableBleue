@@ -1,12 +1,17 @@
-import { IsString } from 'class-validator';
+import { IsCreditCard, IsOptional, IsString } from "class-validator";
 
 export class UpdateCreditCardDetailsDto {
-  @IsString()
+
+  @IsOptional()
+  @IsCreditCard()
   cardNumber: string;
 
-  @IsString()
+  @IsOptional()
+  @IsCreditCard()
   expiryDate: string;
 
-  @IsString()
+
+  @IsOptional()
+  @IsCreditCard()
   cvv: string;
 }

@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { ReviewModule } from './review/review.module';
 import { BookingModule } from './booking/booking.module';
 import { RestaurantModule } from './restaurant/restaurant.module';
+import { TableModule } from './table/table.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RestaurantModule } from './restaurant/restaurant.module';
     ReviewModule,
     BookingModule,
     RestaurantModule,
+    TableModule,
   ],
   controllers: [AppController],
   providers: [AppService],
