@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Restaurant, RestaurantDocument } from './restaurant.model';
 import { CreateRestaurantDto } from './dto/createRestaurant.dto';
+import { hashPassword } from '../auth/utils/auth.utils';
 
 @Injectable()
 export class RestaurantService {
@@ -11,7 +12,8 @@ export class RestaurantService {
   ) {}
 
   async createRestaurant(createRestaurantDto: CreateRestaurantDto): Promise<Restaurant> {
-    const createdRestaurant = new this.restaurantModel(createRestaurantDto);
+    const hashedPassword = await hashPassword(createRestaurantDto.managerPassword);
+    const createdRestaurant = new this.restaurantModel({...createRestaurantDto, managerPassword:hashedPassword});
     return createdRestaurant.save();
   }
 
@@ -24,6 +26,9 @@ export class RestaurantService {
   }
 
   async update(id: string, updateRestaurantDto: CreateRestaurantDto): Promise<Restaurant | null> {
+    if (updateRestaurantDto.managerPassword) {
+      updateRestaurantDto.managerPassword = await hashPassword(updateRestaurantDto.managerPassword);
+    }
     return this.restaurantModel.findByIdAndUpdate(id, updateRestaurantDto, { new: true }).exec();
   }
 

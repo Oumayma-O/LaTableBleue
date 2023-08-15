@@ -16,8 +16,7 @@ export type UserDocument = User & Document;
 
 @Schema({ collection: 'users' })
 export class User {
-  @Prop({ type: Types.ObjectId, default: Types.ObjectId }) // Use Types.ObjectId for _id
-  _id: Types.ObjectId; // Use Types.ObjectId for _id
+
 
   @Prop({ required: true, unique: true })
   username: string;

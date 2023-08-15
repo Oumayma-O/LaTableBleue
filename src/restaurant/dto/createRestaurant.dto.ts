@@ -47,12 +47,15 @@ class Caution {
   @IsNumber()
   fixedAmount: number;
 
+  @IsOptional()
   @IsNumber()
   weekendMultiplier?: number;
 
+  @IsOptional()
   @IsNumber()
   specialOccasionMultiplier?: number;
 
+  @IsOptional()
   @IsNumber()
   partySizeMultiplier?: number;
 }

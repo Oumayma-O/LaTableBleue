@@ -29,7 +29,7 @@ export class UserController {
     return user;
   }
 
-  @Get(':username')
+  @Get('search/:username')
   async getUserByUsername(@Param('username') username: string): Promise<User> {
     const user = await this.userService.getUserByUsername(username);
     if (!user) {

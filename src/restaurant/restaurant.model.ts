@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { Caution, CautionSchema } from './caution.model';
 import { Cuisine } from "./enums/Cuisine";
 import { MealType } from "./enums/MealType";
 import { RestaurantFeature } from "./enums/RestaurantFeature";
@@ -11,8 +10,7 @@ export type RestaurantDocument = Restaurant & Document;
 
 @Schema()
 export class Restaurant {
-  @Prop({ type: Types.ObjectId, default: Types.ObjectId })
-  _id: Types.ObjectId;
+
 
   @Prop({ required: true })
   managerFirstName: string;
@@ -69,8 +67,22 @@ export class Restaurant {
   @Prop({ type: [{ type: String }] })
   images?: string[];
 
-  @Prop({ type: CautionSchema, required: true })
-  caution: Caution;
+  @Prop({
+    required: true,
+    type: {
+      fixedAmount: { type: Number, required: true },
+      weekendMultiplier: { type: Number, default: 1.2 },
+      specialOccasionMultiplier: { type: Number, default: 1.5 },
+      partySizeMultiplier: { type: Number, default: 1.1 },
+    },
+  })
+  caution: {
+    fixedAmount: number;
+    weekendMultiplier?: number;
+    specialOccasionMultiplier?: number;
+    partySizeMultiplier?: number;
+  };
+
 
   @Prop({ required: true })
   CancellationDeadline: number;
