@@ -17,10 +17,10 @@ export enum Gender {
   OTHER = 'other',
 }
 
-export type UserDocument = User & Document;
+export type ClientDocument = Client & Document;
 
-@Schema({ collection: 'users' })
-export class User {
+@Schema({ collection: 'clients' })
+export class Client {
   @Prop({ type: Types.ObjectId, default: Types.ObjectId }) // Use Types.ObjectId for _id
   _id: Types.ObjectId; // Use Types.ObjectId for _id
 
@@ -89,9 +89,9 @@ export class User {
   @Prop({ type: Types.ObjectId, ref: 'Booking' }) // Array of references to the Booking model
   bookings: Types.ObjectId[]; // Use Types.ObjectId for the array of bookings
 
-  constructor(partial: Partial<User>) {
+  constructor(partial: Partial<Client>) {
     Object.assign(this, partial);
   }
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const ClientSchema = SchemaFactory.createForClass(Client);

@@ -141,7 +141,7 @@ export class Restaurant {
   averagePrice: number;
 
   @Prop({ type: String })
-  mapsLink: string;
+  mapsLink: string; // maybe we should add coordinates instead
 
   @Prop({ type: String })
   FbLink: string;
@@ -191,7 +191,7 @@ export class Restaurant {
   tables: Types.ObjectId[]; // Array of references to Table model.
 
   @Prop({ type: Number })
-  NumberOfTables: number;
+  NumberOfTables: number; // calculate it make it dynamic
 
   constructor(partial: Partial<Restaurant>) {
     Object.assign(this, partial);

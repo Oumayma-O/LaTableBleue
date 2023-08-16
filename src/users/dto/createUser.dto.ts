@@ -8,7 +8,7 @@ import {
   IsOptional,
   Matches,
 } from 'class-validator';
-import { Gender, ProfileType } from 'src/user/user.model';
+import { Gender, ProfileType } from '../models/user.model';
 
 export class CreateAdminDto {
   @IsNotEmpty()
