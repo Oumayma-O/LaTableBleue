@@ -7,7 +7,7 @@ import {
   IsDate,
   Matches,
 } from 'class-validator';
-import { Gender } from 'src/user/user.model';
+import { Gender } from '../models/user.model';
 
 export class UpdateClientBioDto {
   @IsOptional()
