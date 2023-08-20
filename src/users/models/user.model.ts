@@ -35,12 +35,6 @@ export class User {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ required: true })
-  confirmPassword: string;
-
-  @Prop({ required: true, enum: ProfileType, default: ProfileType.CLIENT })
-  role: string;
-
   @Prop({ enum: Gender, default: Gender.OTHER }) // Gender field with enum values
   gender: string;
 

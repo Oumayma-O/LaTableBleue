@@ -4,6 +4,6 @@ import { ClientDashboardController } from './client-dashboard.controller';
 
 @Module({
   controllers: [ClientDashboardController],
-  providers: [ClientDashboardService]
+  providers: [ClientDashboardService],
 })
 export class ClientDashboardModule {}

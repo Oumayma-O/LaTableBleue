@@ -1,15 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Types } from 'mongoose';
+import { Types } from 'mongoose';
 import {
   CreditCardDetails,
   CreditCardDetailsSchema,
 } from './creditCardDetails.model';
 import { User, UserDocument } from './user.model';
 
-export type ClientDocument = Client & UserDocument;
+export type GuestDocument = Guest & UserDocument;
 
 @Schema()
-export class Client extends User {
+export class Guest extends User {
   @Prop({ required: false, type: Date })
   birthdate?: Date;
 
@@ -39,16 +39,16 @@ export class Client extends User {
   @Prop({ required: false }) // Optional address field
   address?: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Booking' }) // Array of references to the Booking model
-  bookings?: mongoose.Schema.Types.ObjectId[]; // Use Types.ObjectId for the array of bookings
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] }) // Array of references to the Booking model
+  bookings?: Types.ObjectId[]; // Use Types.ObjectId for the array of bookings
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Review' }] }) // Array of references to Review model
   reviews?: Types.ObjectId[]; // Use Types.ObjectId for the array of reviews
 
-  constructor(partial: Partial<Client>) {
+  constructor(partial: Partial<Guest>) {
     super(partial);
     Object.assign(this, partial);
   }
 }
 
-export const ClientSchema = SchemaFactory.createForClass(Client);
+export const GuestSchema = SchemaFactory.createForClass(Guest);

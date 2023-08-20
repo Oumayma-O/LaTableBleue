@@ -1,82 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-import { Caution, CautionSchema } from './caution.model';
-
-export enum Cuisine {
-  TUNISIAN = 'Tunisian',
-  LEBANESE = 'Lebanese',
-  MIDDLE_EAST = 'Middle Eastern',
-  INDIAN = 'Indian',
-  TURKISH = 'Turkish',
-  ITALIAN = 'Italian',
-  FRENCH = 'French',
-  SYRIAN = 'Syrian',
-  JAPANESE = 'Japanese',
-  TAIWANESE = 'Taiwanese',
-  CHINESE = 'Chinese',
-  MEXICAN = 'mexican',
-  VEGETARIAN = 'Vegetarian',
-  FUSION = 'Fusion',
-  KOREAN = 'Korean',
-  ASIAN = 'Asian', // Can represent a broader category for various Asian cuisines.
-}
-
-export enum MealType {
-  BREAKFAST = 'Breakfast',
-  BRUNCH = 'Brunch',
-  LUNCH = 'Lunch',
-  DINNER = 'Dinner',
-  LATE_DINNER = 'Late Dinner',
-  COCKTAIL = 'Cocktail',
-  SNACK = 'Snack',
-  DESSERT = 'Dessert',
-  BEVERAGE = 'Beverage',
-  BREAKING_FAST = 'Breaking fast',
-  OTHER = 'Other',
-}
-
-export enum RestaurantFeature {
-  WITH_FRIENDS = 'With friends',
-  DINNER_AND_SHOW = ' Dinner and Show ',
-  ALL_YOU_CAN_EAT_BUFFET = 'All You Can Eat Buffet',
-  BIRTHDAY = 'Birthday',
-  BISTRO = 'Bistro',
-  BISTRONOMIC = 'Bistronomic',
-  CONTEMPORARY_CUISINE = 'Contemporary Cuisine',
-  FINE_DINING = 'Fine Dining',
-  FROM_MARKET = 'From Market',
-  GARDEN = 'Garden',
-  GIFT_CARDS = 'Gift Cards',
-  GOOD_FOR_BUSINESS_LUNCH = 'Good for a Business Lunch',
-  GOOD_FOR_FAMILIES = 'Good for Families',
-  GOOD_FOR_GROUPS = 'Good for Groups',
-  GREAT_VIEW = 'Great View',
-  IN_THE_MOUNTAINS = 'In the Mountains',
-  KID_FRIENDLY = 'Kid-Friendly',
-  SEAFRONT = 'Seafront',
-  ORGANIC = 'Organic',
-  RESTAURANT_HOTEL = 'Restaurant Hotel',
-  ROMANTIC = 'Romantic',
-  SEMINAR = 'Seminar',
-  TERRACE = 'Terrace',
-  TRADITIONAL = 'Traditional',
-  TRENDY = 'Trendy',
-  WEDDING = 'Wedding',
-  WINE_BAR = 'Wine Bar',
-}
+import mongoose, { Document, Types } from 'mongoose';
+import { RestaurantFeature, Cuisine, MealType } from './enums';
+import { Caution } from './caution.model';
 
 export type RestaurantDocument = Restaurant & Document;
 
 @Schema()
 export class Restaurant {
-  @Prop({ type: Types.ObjectId, default: Types.ObjectId })
-  _id: Types.ObjectId;
-
   @Prop({ required: true, unique: true })
-  name: string;
+  restaurantName: string;
 
-  @Prop({ type: String, required: true, enum: Object.values(Cuisine) })
-  cuisine: string;
+  @Prop({ enum: Cuisine })
+  cuisine: Cuisine;
 
   @Prop({ required: true })
   address: string;
@@ -89,12 +24,12 @@ export class Restaurant {
 
   @Prop([
     {
-      category: { type: String, required: true }, // Menu category (e.g., Entrantes, Ensaladas, Arroces, etc.)
+      category: String,
       items: [
         {
-          name: { type: String, required: true }, // Menu item name (e.g., Pulpo a la parrilla con chimichurri)
-          price: { type: String, required: true }, // Price of the menu item (e.g., €29)
-          description: { type: String, required: true }, // Description of the menu item
+          name: String,
+          price: String,
+          description: String,
         },
       ],
     },
@@ -104,7 +39,7 @@ export class Restaurant {
     items: { name: string; price: string; description: string }[];
   }[];
 
-  @Prop({ type: [{ type: String }] })
+  @Prop({ type: [String] })
   menuImages: string[];
 
   @Prop({
@@ -116,40 +51,40 @@ export class Restaurant {
   })
   isMenuOrMenuImagesRequired: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User' })
-  owner: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Restaurateur' })
+  manager: Types.ObjectId; // Use 'ObjectId' type for the reference
 
   @Prop()
   description: string;
 
-  @Prop({ type: [{ type: String }] })
+  @Prop({ type: [String] })
   images: string[];
 
-  @Prop({ type: CautionSchema, required: true })
-  caution: Caution;
+  @Prop({ type: Caution }) // Embed Caution subdocument
+  caution: Caution; // Use the name of the class as the type
 
   @Prop({ required: true })
   cancellationDeadline: number;
 
-  @Prop({ type: String })
+  @Prop()
   websiteLink: string;
 
-  @Prop({ type: String })
+  @Prop()
   phoneNumber: string;
 
-  @Prop({ type: Number })
+  @Prop()
   averagePrice: number;
 
-  @Prop({ type: String })
-  mapsLink: string; // maybe we should add coordinates instead
+  @Prop()
+  mapsLink: string;
 
-  @Prop({ type: String })
+  @Prop()
   FbLink: string;
 
-  @Prop({ type: String })
+  @Prop()
   InstaLink: string;
 
-  @Prop({ type: Date })
+  @Prop()
   foundationDate: Date;
 
   @Prop({
@@ -169,8 +104,8 @@ export class Restaurant {
         },
         intervals: [
           {
-            openingTime: { type: String },
-            closingTime: { type: String },
+            openingTime: String,
+            closingTime: String,
           },
         ],
       },
@@ -181,17 +116,25 @@ export class Restaurant {
     intervals: { openingTime: string; closingTime: string }[];
   }[];
 
-  @Prop({ type: [{ type: String, enum: Object.values(MealType) }] })
-  meals: string[];
+  @Prop({ type: [String], enum: MealType })
+  meals: MealType[];
 
-  @Prop({ type: [{ type: String, enum: Object.values(RestaurantFeature) }] })
-  features: string[];
+  @Prop({ type: [String], enum: RestaurantFeature })
+  features: RestaurantFeature[];
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] })
-  tables: Types.ObjectId[]; // Array of references to Table model.
+  tables: Types.ObjectId[];
 
-  @Prop({ type: Number })
-  NumberOfTables: number; // calculate it make it dynamic
+  // Compute the number of tables dynamically
+  get NumberOfTables(): number {
+    return this.tables ? this.tables.length : 0;
+  }
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
+  bookingHistory: Types.ObjectId[];
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Review' }] }) // Array of references to Review model
+  reviews: Types.ObjectId[]; // Use Types.ObjectId for the array of reviews
 
   constructor(partial: Partial<Restaurant>) {
     Object.assign(this, partial);

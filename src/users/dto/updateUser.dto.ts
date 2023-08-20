@@ -4,9 +4,10 @@ import {
   IsUrl,
   IsOptional,
   Matches,
+  IsPhoneNumber,
 } from 'class-validator';
 
-export class updateAdminDto {
+export class updateUserDto {
   @IsOptional()
   @IsString()
   @Matches(/(?=[^\d].*)^[\w]{4,}$/, {
@@ -22,6 +23,10 @@ export class updateAdminDto {
   @IsOptional()
   @IsString()
   lastName: string;
+
+  @IsOptional()
+  @IsPhoneNumber()
+  phoneNumber: string;
 
   @IsOptional()
   @IsEmail()

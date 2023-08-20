@@ -2,7 +2,7 @@ import { IsString, IsNotEmpty, IsOptional, IsDate } from 'class-validator';
 
 import { CreateUserDto } from './createUser.dto';
 
-export class CreateClientDto extends CreateUserDto {
+export class CreateGuestDto extends CreateUserDto {
   @IsNotEmpty()
   @IsDate()
   birthdate: Date;

@@ -1,51 +1,47 @@
-import { prop, getModelForClass, Ref } from '@typegoose/typegoose';
-import { Restaurant } from '../restaurant/models/restaurant.model'; // Import Restaurant model
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { Document, Types } from 'mongoose';
 import { BookingState } from './enums';
-import { Table } from '../table/table.model';
-import { User } from '../users/models/user.model'; // Import BookingState enum
 
+@Schema()
 export class Booking {
-  @prop({ ref: User })
-  user: Ref<User>;
+  @Prop({ type: Types.ObjectId, ref: 'Guest' })
+  guest: Types.ObjectId;
 
-  @prop({ ref: Restaurant, required: true })
-  restaurant: Ref<Restaurant>;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' })
+  restaurant: mongoose.Types.ObjectId;
 
-  @prop({ required: true })
+  @Prop({ required: true })
   dateTime: Date;
 
-  @prop({ required: true })
+  @Prop({ required: true })
   numberOfPersons: number;
 
-  @prop({ default: 0 })
+  @Prop({ default: 0 })
   cautionAmount: number;
 
-  @prop({ enum: BookingState, default: BookingState.PENDING })
+  @Prop({ enum: BookingState, default: BookingState.PENDING })
   bookingState: BookingState;
 
-  @prop([
+  @Prop([
     {
-      state: { type: String, enum: BookingState },
+      state: { type: String, enum: Object.values(BookingState) },
       timestamp: Date,
     },
   ])
   stateChanges: { state: BookingState; timestamp: Date }[];
 
-  @prop({ default: Date.now() })
+  @Prop({ default: Date.now() })
   createdAt: Date;
 
-  @prop({ ref: 'Table' }) // Use the class name instead of string
-  bookedTables: Ref<Table>[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] }) // Array of references to Table model.
+  bookedTables: Types.ObjectId[];
 
-  @prop()
+  @Prop({ type: Date })
   cancellationDeadline: Date;
 
-  @prop()
+  @Prop({ type: Date })
   paymentDelay: Date;
-
-  constructor(partial: Partial<Booking>) {
-    Object.assign(this, partial);
-  }
 }
 
-export const BookingModel = getModelForClass(Booking);
+export type BookingDocument = Booking & Document;
+export const BookingSchema = SchemaFactory.createForClass(Booking);

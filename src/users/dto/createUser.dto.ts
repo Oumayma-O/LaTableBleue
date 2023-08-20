@@ -7,10 +7,11 @@ import {
   IsUrl,
   IsOptional,
   Matches,
+  IsPhoneNumber,
 } from 'class-validator';
-import { Gender, ProfileType } from '../models/user.model';
+import { Gender } from '../models/user.model';
 
-export class CreateAdminDto {
+export class CreateUserDto {
   @IsNotEmpty()
   @IsString({ message: 'Email must be a string' })
   @Matches(/(?=[^\d].*)^[\w]{4,}$/, {
@@ -44,9 +45,9 @@ export class CreateAdminDto {
   @IsString()
   confirmPassword: string;
 
-  @IsNotEmpty()
-  @IsEnum(ProfileType)
-  role: ProfileType.ADMIN;
+  @IsOptional()
+  @IsPhoneNumber()
+  phoneNumber: string;
 
   @IsNotEmpty()
   @IsEnum(Gender)

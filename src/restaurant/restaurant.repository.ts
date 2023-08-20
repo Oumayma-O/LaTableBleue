@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
-import { Restaurant, RestaurantDocument } from './restaurant.model';
+import { Restaurant, RestaurantDocument } from './models/restaurant.model';
 
 @Injectable()
 export class RestaurantRepository {
@@ -15,5 +15,4 @@ export class RestaurantRepository {
     return this.restaurantModel.findById(id).exec();
   }
 
-  // Add more methods as needed for interacting with the Restaurant model
 }

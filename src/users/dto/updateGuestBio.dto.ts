@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { Gender } from '../models/user.model';
 
-export class UpdateClientBioDto {
+export class UpdateGuestBioDto {
   @IsOptional()
   @IsString()
   @Matches(/(?=[^\d].*)^[\w]{4,}$/, {

@@ -17,9 +17,6 @@ export enum TableDescription {
 
 @Schema()
 export class Table {
-  @Prop({ type: Types.ObjectId, default: Types.ObjectId }) // Use Types.ObjectId for _id
-  _id: Types.ObjectId; // Use Types.ObjectId for _id
-
   @Prop({ required: true, unique: true })
   number: number;
 
@@ -29,7 +26,7 @@ export class Table {
   @Prop({ enum: Object.values(TableDescription) })
   description: TableDescription;
 
-  @Prop({ type: Types.ObjectId, ref: 'Restaurant', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Restaurant' })
   restaurant: Types.ObjectId;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })

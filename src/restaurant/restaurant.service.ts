@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { RestaurantRepository } from './restaurant.repository';
 
-
 @Injectable()
 export class RestaurantService {
   constructor(private readonly restaurantRepository: RestaurantRepository) {}
@@ -22,5 +21,4 @@ export class RestaurantService {
     }
     return 0;
   }
-
 }

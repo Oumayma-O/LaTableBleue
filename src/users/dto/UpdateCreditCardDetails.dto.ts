@@ -10,7 +10,6 @@ export class UpdateCreditCardDetailsDto {
   @IsCreditCard()
   expiryDate: string;
 
-
   @IsOptional()
   @IsCreditCard()
   cvv: string;

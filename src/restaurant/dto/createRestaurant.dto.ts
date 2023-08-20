@@ -12,8 +12,8 @@ import {
   IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { RestaurantFeature } from '../restaurant.model';
 import { IsMenuOrMenuImagesRequired } from '../IsMenuOrMenuImagesRequired.validator';
+import { RestaurantFeature } from '../models/enums';
 
 export class MenuItemDto {
   @IsString()
