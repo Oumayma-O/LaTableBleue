@@ -1,46 +1,64 @@
 import {
   IsString,
-  IsArray,
+  IsEmail,
+  MinLength,
   IsNotEmpty,
-  IsNumber,
-  Min,
-  Max,
-  IsUrl,
   IsOptional,
-  IsDate,
-  IsEnum,
-  IsPositive,
-} from 'class-validator';
+  IsPhoneNumber, IsEnum, IsNumber, IsUrl, ValidateNested, ArrayMinSize, ArrayNotEmpty, IsArray, IsObject
+} from "class-validator";
 import { Type } from 'class-transformer';
-import { IsMenuOrMenuImagesRequired } from '../IsMenuOrMenuImagesRequired.validator';
-import { RestaurantFeature } from '../models/enums';
+import {Cuisine, MealType, RestaurantFeature} from "../models/enums";
 
-export class MenuItemDto {
+
+
+
+class MenuItem {
   @IsString()
-  @IsNotEmpty()
   name: string;
 
   @IsString()
-  @IsNotEmpty()
   price: string;
 
   @IsString()
-  @IsNotEmpty()
   description: string;
+
 }
 
-export class MenuCategoryDto {
+class MenuCategory {
   @IsString()
-  @IsNotEmpty()
   category: string;
 
-  @IsArray()
-  @Type(() => MenuItemDto)
-  @IsNotEmpty()
-  items: MenuItemDto[];
+  @ValidateNested({ each: true })
+  @ArrayMinSize(1)
+  @Type(() => MenuItem)
+  items: MenuItem[];
 }
 
-export class IntervalsDto {
+
+
+class Caution {
+  @IsNotEmpty()
+  @IsNumber()
+  fixedAmount: number;
+
+  @IsOptional()
+  @IsNumber()
+  weekendMultiplier?: number;
+
+  @IsOptional()
+  @IsNumber()
+  specialOccasionMultiplier?: number;
+
+  @IsOptional()
+  @IsNumber()
+  partySizeMultiplier?: number;
+}
+
+
+
+
+
+class OperatingHourInterval {
   @IsString()
   @IsNotEmpty()
   openingTime: string;
@@ -50,101 +68,121 @@ export class IntervalsDto {
   closingTime: string;
 }
 
-export class OperatingDayDto {
+class OperatingHour {
   @IsString()
   @IsNotEmpty()
   day: string;
 
-  @IsArray()
-  @Type(() => IntervalsDto)
-  @IsNotEmpty()
-  intervals: IntervalsDto[];
+  @ValidateNested({ each: true })
+  @ArrayNotEmpty()
+  @Type(() => OperatingHourInterval)
+  intervals: OperatingHourInterval[];
 }
 
+
+
+
+
+
+
 export class CreateRestaurantDto {
-  @IsString()
+
   @IsNotEmpty()
+  @IsString()
+  managerFirstName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  managerLastName: string;
+
+  @IsNotEmpty()
+  @IsEmail()
+  managerEmail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @MinLength(6, { message: 'Password should be at least 6 characters long' })
+  managerPassword: string;
+
+  @IsNotEmpty()
+  @IsPhoneNumber()
+  phoneNumber: string;
+
+  @IsNotEmpty()
+  @IsString()
   name: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsEnum(Cuisine)
   cuisine: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   address: string;
 
-  @IsString()
   @IsNotEmpty()
+  @IsString()
   city: string;
 
+  @IsOptional()
   @IsNumber()
-  @Min(1)
-  @Max(10)
-  rating: number;
+  rating?: number;
 
-  @IsArray()
-  @Type(() => MenuCategoryDto)
-  @IsMenuOrMenuImagesRequired()
-  menu?: MenuCategoryDto[];
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => MenuCategory)
+  menu: MenuCategory[];
 
-  @IsArray()
-  @IsString({ each: true })
-  @IsMenuOrMenuImagesRequired()
-  menuImages?: string[];
 
-  @IsNumber()
+  @IsNotEmpty()
+  @IsString()
+  description: string;
+
+  @IsOptional()
+  images?: string[];
+
+  @IsNotEmpty()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => Caution)
+  caution: Caution;
+
   @IsNotEmpty()
   CancellationDeadline: number;
 
+  @IsOptional()
   @IsUrl()
-  @IsOptional()
-  websiteLink?: string;
+  website?: string;
 
-  @IsString()
   @IsOptional()
-  phoneNumber?: string;
-
   @IsNumber()
-  @IsOptional()
   averagePrice?: number;
 
-  @IsUrl()
   @IsOptional()
+  @IsUrl()
   mapsLink?: string;
 
-  @IsUrl()
-  @IsOptional()
-  FbLink?: string;
-
-  @IsUrl()
-  @IsOptional()
-  InstaLink?: string;
-
-  @IsDate()
   @IsOptional()
   foundationDate?: Date;
 
-  @IsArray()
-  @Type(() => OperatingDayDto)
   @IsOptional()
-  operatingHours?: OperatingDayDto[];
-
   @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  meals?: string[];
+  @Type(() => OperatingHour)
+  operatingHours?: OperatingHour[];
 
+  @IsOptional()
+  @IsArray()
+  @IsEnum(MealType, { each: true })
+  meals?: MealType[];
+
+  @IsOptional()
   @IsArray()
   @IsEnum(RestaurantFeature, { each: true })
-  @IsOptional()
-  features?: string[];
+  features?: RestaurantFeature[];
 
-  @IsNumber()
-  @IsNotEmpty()
-  @IsPositive()
-  NumberOfTables: number;
-
-  @IsNotEmpty({ message: 'Either menu or menuImages is required.' })
-  isMenuOrMenuImagesRequired: string;
 }
+
+
+
+
+

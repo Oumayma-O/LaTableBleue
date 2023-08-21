@@ -1,16 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { RestaurantFeature, Cuisine, MealType } from './enums';
-import { Caution } from './caution.model';
+import {Cuisine, MealType, RestaurantFeature} from "./enums";
 
+
+
+export type RestaurantDocument = Restaurant & Document;
 
 @Schema()
-export class Restaurant extends Document {
-  @Prop({ required: true, unique: true })
-  restaurantName: string;
+export class Restaurant {
 
-  @Prop({ enum: Cuisine })
-  cuisine: Cuisine;
+
+  @Prop({ required: true, unique: true })
+  name: string;
+
+  @Prop({ type: String, required: true, enum: Object.values(Cuisine) })
+  cuisine: string;
 
   @Prop({ required: true })
   address: string;
@@ -18,73 +22,65 @@ export class Restaurant extends Document {
   @Prop({ required: true })
   city: string;
 
-  @Prop({ required: true, min: 1, max: 10 })
+  @Prop({ default: 0 })
   rating: number;
 
   @Prop([
     {
-      category: String,
+      category: { type: String }, // Menu category (e.g., Entrantes, Ensaladas, Arroces, etc.)
       items: [
         {
-          name: String,
-          price: String,
-          description: String,
+          name: { type: String }, // Menu item name (e.g., Pulpo a la parrilla con chimichurri)
+          price: { type: String }, // Price of the menu item (e.g., €29)
+          description: { type: String }, // Description of the menu item
         },
       ],
     },
   ])
-  menu: {
+  menu?: {
     category: string;
     items: { name: string; price: string; description: string }[];
   }[];
 
-  @Prop({ type: [String] })
-  menuImages: string[];
 
-  @Prop({
-    validate: function () {
-      if (!this.menu && !this.menuImages) {
-        throw new Error('Either menu or menuImages is required.');
-      }
-    },
-  })
-  isMenuOrMenuImagesRequired: string;
-
-  @Prop({ type: Types.ObjectId, ref: 'Restaurateur' })
-  manager: Types.ObjectId; // Use 'ObjectId' type for the reference
-
-  @Prop()
+  @Prop({required: true})
   description: string;
 
-  @Prop({ type: [String] })
-  images: string[];
+  @Prop({ type: [{ type: String }] })
+  images?: string[];
 
-  @Prop({ type: Caution }) // Embed Caution subdocument
-  caution: Caution; // Use the name of the class as the type
+  @Prop({
+    required: true,
+    type: {
+      fixedAmount: { type: Number, required: true },
+      weekendMultiplier: { type: Number, default: 1.2 },
+      specialOccasionMultiplier: { type: Number, default: 1.5 },
+      partySizeMultiplier: { type: Number, default: 1.1 },
+    },
+  })
+  caution: {
+    fixedAmount: number;
+    weekendMultiplier?: number;
+    specialOccasionMultiplier?: number;
+    partySizeMultiplier?: number;
+  };
+
 
   @Prop({ required: true })
-  cancellationDeadline: number;
+  CancellationDeadline: number;
 
-  @Prop()
-  websiteLink: string;
+  @Prop({ type: String })
+  website?: string;
 
-  @Prop()
-  phoneNumber: string;
 
-  @Prop()
-  averagePrice: number;
+  @Prop({ type: Number })
+  averagePrice?: number;
 
-  @Prop()
-  mapsLink: string;
+  @Prop({ type: String })
+  mapsLink?: string;
 
-  @Prop()
-  FbLink: string;
-
-  @Prop()
-  InstaLink: string;
-
-  @Prop()
-  foundationDate: Date;
+  @Prop({ type: Date })
+  foundationDate?: Date;
 
   @Prop({
     type: [
@@ -103,40 +99,25 @@ export class Restaurant extends Document {
         },
         intervals: [
           {
-            openingTime: String,
-            closingTime: String,
+            openingTime: { type: String },
+            closingTime: { type: String },
           },
         ],
       },
     ],
   })
-  operatingHours: {
+  operatingHours?: {
     day: string;
     intervals: { openingTime: string; closingTime: string }[];
   }[];
 
-  @Prop({ type: [String], enum: MealType })
-  meals: MealType[];
+  @Prop({ type: [{ type: String, enum: Object.values(MealType) }] })
+  meals?: string[];
 
-  @Prop({ type: [String], enum: RestaurantFeature })
-  features: RestaurantFeature[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] })
-  tables: Types.ObjectId[];
-
-  // Compute the number of tables dynamically
-  get NumberOfTables(): number {
-    return this.tables ? this.tables.length : 0;
-  }
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
-  bookingHistory: Types.ObjectId[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Review' }] }) // Array of references to Review model
-  reviews: Types.ObjectId[]; // Use Types.ObjectId for the array of reviews
+  @Prop({ type: [{ type: String, enum: Object.values(RestaurantFeature) }] })
+  features?: string[];
 
   constructor(partial: Partial<Restaurant>) {
-    super(partial);
     Object.assign(this, partial);
   }
 }
