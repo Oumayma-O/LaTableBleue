@@ -1,14 +1,14 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { BookingState } from './enums';
 
 @Schema()
-export class Booking {
+export class Booking extends Document{
   @Prop({ type: Types.ObjectId, ref: 'Guest' })
   guest: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant' })
-  restaurant: mongoose.Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Restaurant' })
+  restaurant: Types.ObjectId;
 
   @Prop({ required: true })
   dateTime: Date;
@@ -41,7 +41,11 @@ export class Booking {
 
   @Prop({ type: Date })
   paymentDelay: Date;
+
+  constructor(partial: Partial<Booking>) {
+    super(partial);
+    Object.assign(this, partial);
+  }
 }
 
-export type BookingDocument = Booking & Document;
 export const BookingSchema = SchemaFactory.createForClass(Booking);

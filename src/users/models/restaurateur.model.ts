@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { User, UserDocument } from './user.model';
-
-export type RestaurateurDocument = Restaurateur & UserDocument;
+import { User } from './user.model';
 
 @Schema()
 export class Restaurateur extends User {

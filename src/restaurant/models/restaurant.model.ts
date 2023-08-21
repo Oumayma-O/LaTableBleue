@@ -1,12 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { RestaurantFeature, Cuisine, MealType } from './enums';
 import { Caution } from './caution.model';
 
-export type RestaurantDocument = Restaurant & Document;
 
 @Schema()
-export class Restaurant {
+export class Restaurant extends Document {
   @Prop({ required: true, unique: true })
   restaurantName: string;
 
@@ -137,6 +136,7 @@ export class Restaurant {
   reviews: Types.ObjectId[]; // Use Types.ObjectId for the array of reviews
 
   constructor(partial: Partial<Restaurant>) {
+    super(partial);
     Object.assign(this, partial);
   }
 }

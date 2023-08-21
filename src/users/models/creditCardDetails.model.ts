@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export type CreditCardDetailsDocument = CreditCardDetails & Document;
 
 @Schema()
-export class CreditCardDetails {
+export class CreditCardDetails extends Document{
   @Prop({ required: true })
   cardNumber: string;
 
@@ -15,6 +14,7 @@ export class CreditCardDetails {
   cvv: string;
 
   constructor(partial: Partial<CreditCardDetails>) {
+    super(partial);
     Object.assign(this, partial);
   }
 }

@@ -16,7 +16,7 @@ export enum TableDescription {
 }
 
 @Schema()
-export class Table {
+export class Table extends Document{
   @Prop({ required: true, unique: true })
   number: number;
 
@@ -33,9 +33,9 @@ export class Table {
   bookings: Types.ObjectId[];
 
   constructor(partial: Partial<Table>) {
+    super(partial);
     Object.assign(this, partial);
   }
 }
 
-export type TableDocument = Table & Document;
 export const TableSchema = SchemaFactory.createForClass(Table);

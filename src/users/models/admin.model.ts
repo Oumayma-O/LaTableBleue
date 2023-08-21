@@ -1,8 +1,6 @@
 import { Schema, SchemaFactory } from '@nestjs/mongoose';
 
-import { User, UserDocument } from './user.model';
-
-export type AdminDocument = Admin & UserDocument;
+import { User } from './user.model';
 
 @Schema()
 export class Admin extends User {

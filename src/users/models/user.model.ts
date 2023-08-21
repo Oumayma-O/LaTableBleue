@@ -13,10 +13,8 @@ export enum Gender {
   OTHER = 'other',
 }
 
-export type UserDocument = User & Document;
-
 @Schema({ collection: 'users' })
-export class User {
+export class User extends Document {
   @Prop({ required: true, unique: true })
   username: string;
 
@@ -48,6 +46,7 @@ export class User {
   avatar?: string;
 
   constructor(partial: Partial<User>) {
+    super(partial);
     Object.assign(this, partial);
   }
 }

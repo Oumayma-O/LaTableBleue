@@ -13,19 +13,21 @@ import { Gender } from '../models/user.model';
 
 export class CreateUserDto {
   @IsNotEmpty()
-  @IsString({ message: 'Email must be a string' })
+  @IsString({ message: 'Username must be a string' })
   @Matches(/(?=[^\d].*)^[\w]{4,}$/, {
     message:
       'the first character of the username must not be a number. Username must contains at least 4 characters',
   })
   username: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'you need to enter your firstname' })
   @IsString()
+  @Matches(/^[A-Za-z\s]+$/, { message: 'First name must contain only letters' })
   firstName: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'you need to enter your lastname' })
   @IsString()
+  @Matches(/^[A-Za-z\s]+$/, { message: 'Last name must contain only letters' })
   lastName: string;
 
   @IsNotEmpty()

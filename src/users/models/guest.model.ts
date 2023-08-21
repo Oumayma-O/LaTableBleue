@@ -4,9 +4,7 @@ import {
   CreditCardDetails,
   CreditCardDetailsSchema,
 } from './creditCardDetails.model';
-import { User, UserDocument } from './user.model';
-
-export type GuestDocument = Guest & UserDocument;
+import { User } from './user.model';
 
 @Schema()
 export class Guest extends User {

@@ -1,7 +1,6 @@
-import { IsCreditCard, IsNotEmpty, IsString } from "class-validator";
+import { IsCreditCard, IsNotEmpty, IsString } from 'class-validator';
 
-export class UpdateCreditCardDetailsDto {
-
+export class CreateCreditCardDetailsDto {
   @IsNotEmpty()
   @IsCreditCard()
   cardNumber: string;

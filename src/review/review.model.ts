@@ -1,10 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { Document, Types } from "mongoose";
-
-export type ReviewDocument = Review & Document;
+import { Document, Types } from 'mongoose';
 
 @Schema()
-export class Review {
+export class Review extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Guest' })
   guest: Types.ObjectId; // Reference to the User model (the user who wrote the review).
 
@@ -26,6 +24,7 @@ export class Review {
 
   // Constructor for initializing the review model.
   constructor(partial: Partial<Review>) {
+    super(partial);
     Object.assign(this, partial);
   }
 }

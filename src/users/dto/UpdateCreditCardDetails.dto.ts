@@ -1,7 +1,6 @@
-import { IsCreditCard, IsOptional, IsString } from "class-validator";
+import { IsCreditCard, IsOptional } from 'class-validator';
 
 export class UpdateCreditCardDetailsDto {
-
   @IsOptional()
   @IsCreditCard()
   cardNumber: string;

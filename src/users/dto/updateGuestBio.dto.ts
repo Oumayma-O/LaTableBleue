@@ -1,49 +1,16 @@
-import {
-  IsOptional,
-  IsString,
-  IsEnum,
-  IsUrl,
-  IsPhoneNumber,
-  IsDate,
-  Matches,
-} from 'class-validator';
-import { Gender } from '../models/user.model';
+import { IsOptional, IsDate, IsString, Matches } from 'class-validator';
+import { UpdateUserDto } from './updateUser.dto';
 
-export class UpdateGuestBioDto {
-  @IsOptional()
-  @IsString()
-  @Matches(/(?=[^\d].*)^[\w]{4,}$/, {
-    message:
-      'the first character of the username must not be a number. Username must contains at least 4 characters',
-  })
-  username?: string;
-
-  @IsOptional()
-  @IsString()
-  firstName?: string;
-
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @IsOptional()
-  @IsPhoneNumber()
-  phoneNumber?: string;
-
+export class UpdateGuestBioDto extends UpdateUserDto {
   @IsOptional()
   @IsDate()
   birthdate: Date;
 
   @IsOptional()
-  @IsEnum(Gender)
-  gender?: string;
-
-  @IsOptional()
   @IsString()
-  address?: string;
-
-  @IsOptional()
-  @IsUrl()
-  @IsString()
-  avatar?: string;
+  @Matches(/^\d+\s+[\w\s.-]+,\s+[\w\s.-]+,\s+[\w\s.-]+$/, {
+    message:
+      'Address format should be like this: 15 Rue de la Liberté,La Marsa,Tunis',
+  })
+  address: string;
 }

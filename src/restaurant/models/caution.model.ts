@@ -1,10 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
-export type CautionDocument = Caution & Document;
 
 @Schema()
-export class Caution {
+export class Caution extends Document {
   @Prop({ required: true })
   fixedAmount: number;
 
@@ -19,6 +18,11 @@ export class Caution {
 
   @Prop({ required: true })
   paymentDelay: number; // In hours
+
+  constructor(partial: Partial<Caution>) {
+    super(partial);
+    Object.assign(this, partial);
+  }
 }
 
 export const CautionSchema = SchemaFactory.createForClass(Caution);

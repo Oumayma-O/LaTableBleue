@@ -6,10 +6,19 @@ import { Restaurant, RestaurantSchema } from './models/restaurant.model';
 import { TableModule } from '../table/table.module';
 import { RestaurantRepository } from './restaurant.repository';
 import { ReviewModule } from '../review/review.module';
+import { APP_FILTER } from '@nestjs/core';
+import { DuplicateKeyExceptionFilter } from '../filters/DuplicateKeyExceptionFilter';
 
 @Module({
   controllers: [RestaurantController],
-  providers: [RestaurantService, RestaurantRepository],
+  providers: [
+    RestaurantService,
+    RestaurantRepository,
+    {
+      provide: APP_FILTER,
+      useClass: DuplicateKeyExceptionFilter,
+    },
+  ],
   imports: [
     MongooseModule.forFeature([
       { name: Restaurant.name, schema: RestaurantSchema },
