@@ -26,8 +26,9 @@ export class Table extends Document{
   @Prop({ enum: Object.values(TableDescription) })
   description: TableDescription;
 
-  @Prop({ type: Types.ObjectId, ref: 'Restaurant' })
-  restaurant: Types.ObjectId;
+
+  @Prop({ required:true })
+  restaurantId: string;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
   bookings: Types.ObjectId[];

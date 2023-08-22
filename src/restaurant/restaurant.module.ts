@@ -8,11 +8,14 @@ import { RestaurantRepository } from './restaurant.repository';
 import { ReviewModule } from '../review/review.module';
 import { APP_FILTER } from '@nestjs/core';
 import { DuplicateKeyExceptionFilter } from '../filters/DuplicateKeyExceptionFilter';
+import {TableService} from "../table/table.service";
+import {Table, TableSchema} from "../table/table.model";
 
 @Module({
   controllers: [RestaurantController],
   providers: [
     RestaurantService,
+      TableService,
     RestaurantRepository,
     {
       provide: APP_FILTER,
@@ -21,9 +24,9 @@ import { DuplicateKeyExceptionFilter } from '../filters/DuplicateKeyExceptionFil
   ],
   imports: [
     MongooseModule.forFeature([
-      { name: Restaurant.name, schema: RestaurantSchema },
+      { name: Restaurant.name, schema: RestaurantSchema },{ name: Table.name, schema: TableSchema }
     ]),
-    TableModule,
+      TableModule,
     ReviewModule,
   ],
 })

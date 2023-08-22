@@ -117,6 +117,10 @@ export class Restaurant {
   @Prop({ type: [{ type: String, enum: Object.values(RestaurantFeature) }] })
   features?: string[];
 
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] })
+  tables: Types.ObjectId[]; // Array of references to Table documents
+
+
   constructor(partial: Partial<Restaurant>) {
     Object.assign(this, partial);
   }
