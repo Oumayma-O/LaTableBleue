@@ -21,6 +21,7 @@ import { UserRole } from './UserRole.enum';
 import { CreateCreditCardDetailsDto } from './dto/createCreditCardDetails.dto';
 import { UpdateCreditCardDetailsDto } from './dto/UpdateCreditCardDetails.dto';
 import { UpdatePasswordDto } from '../auth/dto/updatePassword.dto';
+import {Review} from "../review/review.model";
 
 @Controller('users')
 @UseFilters(DuplicateKeyExceptionFilter)
@@ -139,5 +140,12 @@ export class UserController {
     @Body() updateDto: UpdateCreditCardDetailsDto,
   ) {
     return this.userService.updateCreditCardDetails(userId, updateDto);
+  }
+
+  @Get('guest/:id/reviews')
+  async getReviewsForGuest(
+      @Param('id') guestId: string,
+  ): Promise<Review[]> {
+    return this.userService.getReviewsForGuest(guestId);
   }
 }

@@ -3,17 +3,13 @@ import { Document, Types } from 'mongoose';
 
 @Schema()
 export class Review extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'Guest' })
+  @Prop({ type: Types.ObjectId, ref: 'Guest' , required: true})
   guest: Types.ObjectId; // Reference to the User model (the user who wrote the review).
 
-  @Prop({
-    type: Types.ObjectId,
-    ref: 'Restaurant',
-    required: true,
-  })
+  @Prop({type: Types.ObjectId, ref: 'Restaurant', required: true})
   restaurant: Types.ObjectId; // Reference to the Restaurant model (the restaurant being reviewed).
 
-  @Prop({ required: true, min: 1, max: 10 }) // Specify the rating range from 1 to 10.
+  @Prop({ required: true, min: 1, max: 5 }) // Specify the rating range from 1 to 5.
   rating: number; // The rating given by the user for the restaurant.
 
   @Prop()

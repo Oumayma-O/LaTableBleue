@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import {Document, Model, Types} from 'mongoose';
 import {Cuisine, MealType, RestaurantFeature} from "./enums";
+import {Review} from "../../review/review.model";
 
 
 
@@ -120,10 +121,17 @@ export class Restaurant {
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] })
   tables: Types.ObjectId[]; // Array of references to Table documents
 
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Review' }] })
+  reviews: Types.ObjectId[];
+
 
   constructor(partial: Partial<Restaurant>) {
     Object.assign(this, partial);
   }
 }
 
+
+
 export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);
+
+

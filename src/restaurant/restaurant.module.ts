@@ -10,12 +10,13 @@ import { APP_FILTER } from '@nestjs/core';
 import { DuplicateKeyExceptionFilter } from '../filters/DuplicateKeyExceptionFilter';
 import {TableService} from "../table/table.service";
 import {Table, TableSchema} from "../table/table.model";
+import {Review, ReviewSchema} from "../review/review.model";
 
 @Module({
   controllers: [RestaurantController],
   providers: [
     RestaurantService,
-      TableService,
+    TableService,
     RestaurantRepository,
     {
       provide: APP_FILTER,
@@ -27,7 +28,7 @@ import {Table, TableSchema} from "../table/table.model";
       { name: Restaurant.name, schema: RestaurantSchema },{ name: Table.name, schema: TableSchema }
     ]),
       TableModule,
-    ReviewModule,
+
   ],
 })
 export class RestaurantModule {}

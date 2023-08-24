@@ -27,8 +27,8 @@ export class Table extends Document{
   description: TableDescription;
 
 
-  @Prop({ required:true })
-  restaurantId: string;
+  @Prop({type: Types.ObjectId, ref: 'Restaurant', required: true})
+  restaurant: Types.ObjectId;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
   bookings: Types.ObjectId[];

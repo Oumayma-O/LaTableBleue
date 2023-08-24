@@ -6,6 +6,7 @@ import {Restaurant} from "./models/restaurant.model";
 import {TableService} from "../table/table.service";
 import {Table} from "../table/table.model";
 import {CreateTableDto} from "../table/createTable.dto";
+import {Review} from "../review/review.model";
 
 @Controller('restaurant')
 @UseFilters(DuplicateKeyExceptionFilter)
@@ -69,7 +70,7 @@ export class RestaurantController {
         @Param('id') restaurantId: string,
         @Body() createTableDto: CreateTableDto,
     ): Promise<Table> {
-        createTableDto.restaurantId = restaurantId;
+        createTableDto.restaurant = restaurantId;
         const createdTable = await this.restaurantService.addTableToRestaurant(createTableDto);
         return createdTable;
     }
@@ -128,6 +129,13 @@ export class RestaurantController {
         @Param('tableId') tableId: string,
     ): Promise<void> {
         await this.restaurantService.deleteRestaurantTable(restaurantId, tableId);
+    }
+
+    @Get(':id/reviews')
+    async getReviewsForRestaurant(
+        @Param('id') restaurantId: string,
+    ): Promise<Review[]> {
+        return this.restaurantService.getReviewsForRestaurant(restaurantId);
     }
 
 

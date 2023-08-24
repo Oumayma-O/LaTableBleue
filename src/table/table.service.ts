@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Table } from './table.model';
 import {CreateTableDto} from "./createTable.dto";
+import * as mongoose from "mongoose";
 
 @Injectable()
 export class TableService {
@@ -10,8 +11,18 @@ export class TableService {
 
 
 
-  async createTable(createTableDto: CreateTableDto): Promise<Table> {
+  /*async createTable(createTableDto: CreateTableDto): Promise<Table> {
     const newTable = new this.tableModel(createTableDto);
+    return await newTable.save();
+  }*/
+  async createTable(createTableDto: CreateTableDto): Promise<Table> {
+    const restaurantId = new mongoose.Types.ObjectId(createTableDto.restaurant); // Convert string to ObjectId
+
+    const newTable = new this.tableModel({
+      ...createTableDto,
+      restaurant: restaurantId,
+    });
+
     return await newTable.save();
   }
 

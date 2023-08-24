@@ -18,7 +18,7 @@ export class CreateTableDto {
 
     @IsMongoId() // Ensure it's a valid MongoDB ObjectId
     @IsNotEmpty()
-    restaurantId: string;
+    restaurant: string;
 
 
 }

@@ -33,7 +33,6 @@ import { DuplicateKeyExceptionFilter } from '../filters/DuplicateKeyExceptionFil
       { name: User.name, schema: UserSchema },
     ]),
     BookingModule,
-    ReviewModule,
   ],
   exports: [UserService],
 })

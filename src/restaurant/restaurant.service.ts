@@ -7,6 +7,8 @@ import {CreateRestaurantDto} from "./dto/createRestaurant.dto";
 import {Table, TableDescription} from "../table/table.model";
 import {CreateTableDto} from "../table/createTable.dto";
 import {TableService} from "../table/table.service";
+import {ObjectId} from "mongodb";
+import {Review} from "../review/review.model";
 
 @Injectable()
 export class RestaurantService {
@@ -58,10 +60,13 @@ export class RestaurantService {
         return this.restaurantModel.find({ features: { $in: [feature] } }).exec();
     }
 
+
+    // ******* Tables *******
+
     async addTableToRestaurant(createTableDto: CreateTableDto): Promise<Table> {
-        const restaurant = await this.restaurantModel.findById(createTableDto.restaurantId).exec();
+        const restaurant = await this.restaurantModel.findById(createTableDto.restaurant).exec();
         if (!restaurant) {
-            throw new NotFoundException(`Restaurant with id ${createTableDto.restaurantId} not found`);
+            throw new NotFoundException(`Restaurant with id ${createTableDto.restaurant} not found`);
         }
         const createdTable = await this.tableService.createTable(createTableDto);
         restaurant.tables.push(createdTable._id);
@@ -202,6 +207,73 @@ export class RestaurantService {
         await this.tableService.removeTable(tableId);
 
     }
+
+    // ****** Reviews *******
+
+    async getReviewsForRestaurant(restaurantId: string): Promise<Review[]> {
+        const restaurant = await this.restaurantModel
+            .findById(restaurantId)
+            .populate({
+                path: 'reviews',
+                model: 'Review',
+            })
+            .exec();
+        if (!restaurant) {
+            throw new NotFoundException(`Restaurant with id ${restaurantId} not found`);
+        }
+        const reviews: Review[] = restaurant.reviews as unknown as Review[];
+        return reviews;
+    }
+
+
+    async updateAverageRating(restaurantId: string): Promise<void> {
+        const restaurant = await this.restaurantModel.findById(restaurantId).exec();
+        if (!restaurant) {
+            throw new NotFoundException(`Restaurant with id ${restaurantId} not found`);
+        }
+
+        const reviews = await this.getReviewsForRestaurant(restaurantId);
+        if(reviews && reviews.length>0){
+            const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+            const averageRating = totalRating / reviews.length;
+            restaurant.rating = averageRating;
+            await restaurant.save();}
+    }
+
+
+    async addReviewToRestaurant(restaurantId: ObjectId, reviewId: ObjectId): Promise<void> {
+        const restaurant = await this.restaurantModel.findById(restaurantId).exec();
+        if (!restaurant) {
+            throw new NotFoundException(`Restaurant with id ${restaurantId} not found`);
+        }
+
+        restaurant.reviews.push(reviewId);
+        await restaurant.save();
+        await this.updateAverageRating(restaurantId.toString());
+
+    }
+
+    async removeReviewFromRestaurant(restaurantId: ObjectId, reviewId: ObjectId): Promise<void> {
+        const restaurant = await this.restaurantModel.findById(restaurantId).exec();
+        if (!restaurant) {
+            throw new NotFoundException(`Restaurant with id ${restaurantId} not found`);
+        }
+
+        const reviewIndex = restaurant.reviews.indexOf(reviewId);
+        if (reviewIndex !== -1) {
+            restaurant.reviews.splice(reviewIndex, 1);
+            await restaurant.save();
+            await this.updateAverageRating(restaurantId.toString());
+        }
+    }
+
+
+
+
+
+
+
+
 
 
 

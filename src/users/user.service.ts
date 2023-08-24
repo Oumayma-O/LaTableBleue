@@ -20,6 +20,8 @@ import { UpdateCreditCardDetailsDto } from './dto/UpdateCreditCardDetails.dto';
 import { CreditCardDetails } from './models/creditCardDetails.model';
 import { CreateCreditCardDetailsDto } from './dto/createCreditCardDetails.dto';
 import { UserRole } from './UserRole.enum';
+import {ObjectId} from "mongodb";
+import {Review} from "../review/review.model";
 
 @Injectable()
 export class UserService {
@@ -271,5 +273,43 @@ export class UserService {
       default:
         throw new Error(`Unsupported role: ${role}`);
     }
+  }
+
+  async addReviewToGuest(guestId: ObjectId, reviewId: ObjectId): Promise<void> {
+    const guest = await this.guestModel.findById(guestId).exec();
+    if (!guest) {
+      throw new NotFoundException(`Guest with id ${guestId} not found`);
+    }
+
+    guest.reviews.push(reviewId);
+    await guest.save();
+  }
+
+  async removeReviewFromGuest(userId: ObjectId, reviewId: ObjectId): Promise<void> {
+    const user = await this.guestModel.findById(userId).exec();
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    const reviewIndex = user.reviews.indexOf(reviewId);
+    if (reviewIndex !== -1) {
+      user.reviews.splice(reviewIndex, 1);
+      await user.save();
+    }
+  }
+
+  async getReviewsForGuest(guestId: string): Promise<Review[]> {
+    const guest = await this.guestModel
+        .findById(guestId)
+        .populate({
+          path: 'reviews',
+          model: 'Review',
+        })
+        .exec();
+    if (!guest) {
+      throw new NotFoundException(`Guest with id ${guestId} not found`);
+    }
+    const reviews: Review[] = guest.reviews as unknown as Review[];
+    return reviews;
   }
 }
