@@ -4,7 +4,7 @@ import { RestaurantService } from './restaurant.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Restaurant, RestaurantSchema } from './models/restaurant.model';
 import { EventEmitter2 } from 'eventemitter2';
-import { RestaurantDeletedEvent } from './restaurant..events';
+import { RestaurantDeletedEvent } from './restaurant.events';
 
 @Global()
 @Module({

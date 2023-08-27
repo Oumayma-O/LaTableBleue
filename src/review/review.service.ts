@@ -18,7 +18,7 @@ import { GuestDeletedEvent } from '../guest/guest.events';
 import EventEmitter2 from 'eventemitter2';
 import { Guest } from '../guest/models/guest.model';
 import { ReviewDeletedEvent } from './review.events';
-import { RestaurantDeletedEvent } from '../restaurant/restaurant..events';
+import { RestaurantDeletedEvent } from '../restaurant/restaurant.events';
 import { Restaurant } from '../restaurant/models/restaurant.model';
 
 @Injectable()

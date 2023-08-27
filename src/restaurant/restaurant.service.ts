@@ -1,5 +1,10 @@
-import { Inject, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
-import { Model } from 'mongoose';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Restaurant } from './models/restaurant.model';
 import { TableService } from '../table/table.service';
@@ -10,10 +15,11 @@ import { Table } from '../table/models/table.model';
 import { UpdateTableDto } from '../table/dto/updateTable.dto';
 import { Review } from '../review/models/review.model';
 import { ObjectId } from 'mongodb';
-import EventEmitter2 from 'eventemitter2';
+import { EventEmitter2 } from 'eventemitter2';
 import { ReviewDeletedEvent } from '../review/review.events';
-import { RestaurantDeletedEvent } from './restaurant..events';
-import { RestaurantStatus } from "./models/enums";
+import { RestaurantDeletedEvent } from './restaurant.events';
+import { RestaurantStatus } from './models/enums';
+import { TableDeletedEvent } from '../table/table.events';
 
 @Injectable()
 export class RestaurantService {
@@ -26,6 +32,10 @@ export class RestaurantService {
     // Listen for the reviewDeleted event
     this.eventEmitter.on('reviewDeleted', (event: ReviewDeletedEvent) => {
       this.handleReviewDeleted(event.deletedReview);
+    });
+    // Listen for the tableDeleted event
+    this.eventEmitter.on('tableDeleted', (event: TableDeletedEvent) => {
+      this.handletableDeleted(event.deletedTable);
     });
   }
 
@@ -211,57 +221,23 @@ export class RestaurantService {
   // ******* Tables *******
 
   async findRestaurantTables(restaurantId: string): Promise<Table[]> {
-    const restaurant = await this.restaurantModel
-      .findOne({
-        _id: restaurantId,
-        status: RestaurantStatus.APPROVED,
-      })
-      .populate({
-        path: 'tables',
-        model: Table.name, // Use Table.name instead of 'Table'
-      })
-      .exec();
-
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Approved Restaurant with id ${restaurantId} not found`,
-      );
-    }
-
-    const tables: Table[] = restaurant.tables as unknown as Table[];
-
-    if (tables.length === 0) {
-      console.log('The restaurant has no table details saved');
-    }
-
-    return tables;
+    const restaurant = await this.getApprovedRestaurant(restaurantId);
+    return restaurant.tables as unknown as Table[]; // Already populated
   }
 
   async findRestaurantTableById(
     restaurantId: string,
     tableId: string,
   ): Promise<Table> {
-    const restaurant = await this.restaurantModel
-      .findOne({
-        _id: restaurantId,
-        status: RestaurantStatus.APPROVED,
-      })
-      .populate({
-        path: 'tables',
-        model: Table.name, // Use Table.name instead of 'Table'
-      })
-      .exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Approved Restaurant with id ${restaurantId} not found`,
-      );
-    }
-    const table = await this.tableService.findTableById(tableId); // Use the new method here
-    if (table.restaurant.toString() !== restaurantId) {
+    const tables = await this.findRestaurantTables(restaurantId);
+    const table = tables.find((t) => t._id.toString() === tableId);
+
+    if (!table) {
       throw new NotFoundException(
         `Table with id ${tableId} not found in the restaurant`,
       );
     }
+
     return table;
   }
 
@@ -269,28 +245,15 @@ export class RestaurantService {
     restaurantId: string,
     tableNumber: number,
   ): Promise<Table> {
-    const restaurant = await this.restaurantModel
-      .findOne({
-        _id: restaurantId,
-        status: RestaurantStatus.APPROVED,
-      })
-      .populate({
-        path: 'tables',
-        model: Table.name, // Use Table.name instead of 'Table'
-      })
-      .exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Approved Restaurant with id ${restaurantId} not found`,
-      );
-    }
-    const populatedTables: Table[] = restaurant.tables as unknown as Table[];
-    const table = populatedTables.find((t) => t.number === tableNumber);
+    const tables = await this.findRestaurantTables(restaurantId);
+    const table = tables.find((t) => t.number === tableNumber);
+
     if (!table) {
       throw new NotFoundException(
         `Table with number ${tableNumber} not found in the restaurant`,
       );
     }
+
     return table;
   }
 
@@ -298,27 +261,11 @@ export class RestaurantService {
     restaurantId: string,
     capacity: number,
   ): Promise<Table[]> {
-    const restaurant = await this.restaurantModel
-      .findOne({
-        _id: restaurantId,
-        status: RestaurantStatus.APPROVED,
-      })
-      .populate({
-        path: 'tables',
-        model: Table.name, // Use Table.name instead of 'Table'
-      }) // Populate the 'tables' field with actual 'Table' objects
-      .exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Restaurant with id ${restaurantId} not found`,
-      );
-    }
-    // Use type assertion to cast the populated 'tables' array
-    const populatedTables: Table[] = restaurant.tables as unknown as Table[];
-    // Filter tables by capacity
-    const tablesWithCapacity = populatedTables.filter(
+    const tables = await this.findRestaurantTables(restaurantId);
+    const tablesWithCapacity = tables.filter(
       (table) => table.capacity === capacity,
     );
+
     return tablesWithCapacity;
   }
 
@@ -326,6 +273,15 @@ export class RestaurantService {
     restaurantId: string,
     description: string,
   ): Promise<Table[]> {
+    const tables = await this.findRestaurantTables(restaurantId);
+    const tablesWithDescription = tables.filter(
+      (table) => table.description === description,
+    );
+
+    return tablesWithDescription;
+  }
+
+  private async getApprovedRestaurant(restaurantId: string) {
     const restaurant = await this.restaurantModel
       .findOne({
         _id: restaurantId,
@@ -333,20 +289,17 @@ export class RestaurantService {
       })
       .populate({
         path: 'tables',
-        model: Table.name, // Use Table.name instead of 'Table'
-      }) // Populate the 'tables' field with actual 'Table' objects
+        model: Table.name,
+      })
       .exec();
+
     if (!restaurant) {
       throw new NotFoundException(
-        `Restaurant with id ${restaurantId} not found`,
+        `Approved Restaurant with id ${restaurantId} not found`,
       );
     }
-    const populatedTables: Table[] = restaurant.tables as unknown as Table[];
-    // Filter tables by description
-    const tablesWithDescription = populatedTables.filter(
-      (table) => table.description === description,
-    );
-    return tablesWithDescription;
+
+    return restaurant;
   }
 
   async addTableByRestaurateur(
@@ -384,7 +337,7 @@ export class RestaurantService {
       throw new NotFoundException('Table not found in the restaurant');
     }
     if (restaurant.manager !== restaurateurId) {
-      throw new NotFoundException('you are not authorized to delete the table');
+      throw new NotFoundException('you are not authorized to update the table');
     }
 
     const updatedTable = await this.tableService.updateTable(
@@ -408,12 +361,28 @@ export class RestaurantService {
       throw new NotFoundException('Table not found in the restaurant');
     }
     if (restaurant.manager !== restaurateurId) {
-      throw new NotFoundException('you are not authorized to update the table');
+      throw new NotFoundException('you are not authorized to delete the table');
     }
     // should I just pull or verify bookings too ?
     return await this.tableService.deleteTable(tableId);
   }
 
+  private async removeTableFromRestaurant(
+    restaurantId: Types.ObjectId,
+    tableId: string,
+  ) {
+    await this.restaurantModel.updateOne(
+      { _id: restaurantId },
+      { $pull: { tables: tableId } },
+    );
+  }
+
+  private async handletableDeleted(deletedTable: Table) {
+    const restaurantId = deletedTable.restaurant; // Assuming this is how the relationship is stored
+    const tableId = deletedTable._id;
+
+    await this.removeTableFromRestaurant(restaurantId, tableId);
+  }
   // ****** Reviews *******
 
   async getReviewsForRestaurant(restaurantId: ObjectId): Promise<Review[]> {

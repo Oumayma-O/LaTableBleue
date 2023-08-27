@@ -32,6 +32,9 @@ export class Table extends Document{
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
   bookings?: Types.ObjectId[];
 
+  @Prop({ type: Date, default: null }) // Soft delete timestamp
+  deletedAt?: Date;
+
   constructor(partial: Partial<Table>) {
     super(partial);
     Object.assign(this, partial);

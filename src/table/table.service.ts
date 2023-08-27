@@ -1,12 +1,18 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Table } from './models/table.model';
 import { CreateTableDto } from './dto/createTable.dto';
 import { UpdateTableDto } from './dto/updateTable.dto';
-import EventEmitter2 from 'eventemitter2';
-import { RestaurantDeletedEvent } from '../restaurant/restaurant..events';
+import { EventEmitter2 } from 'eventemitter2';
+import { RestaurantDeletedEvent } from '../restaurant/restaurant.events';
 import { Restaurant } from '../restaurant/models/restaurant.model';
+import { TableDeletedEvent } from './table.events';
 
 @Injectable()
 export class TableService {
@@ -38,13 +44,31 @@ export class TableService {
     }
   }
 
-  // remove it from the booking   nd resto
   async deleteTable(tableId: string): Promise<Table> {
-    const table = await this.tableModel.findByIdAndDelete(tableId).exec();
+    const table = await this.tableModel.findById(tableId).exec();
+
     if (!table) {
       throw new NotFoundException(`Table with id ${tableId} not found`);
     }
+
+    if (table.bookings && table.bookings.length > 0) {
+      throw new ConflictException('Cannot delete a table with bookings');
+    }
+
+    this.eventEmitter.emit('tableDeleted', new TableDeletedEvent(table));
+
+    await table.deleteOne();
     return table;
+  }
+
+  private async removeTableFromRestaurant(
+    restaurantId: Types.ObjectId,
+    tableId: string,
+  ) {
+    await this.tableModel.updateOne(
+      { _id: restaurantId },
+      { $pull: { tables: tableId } },
+    );
   }
 
   async createTable(createTableDto: CreateTableDto): Promise<Table> {
