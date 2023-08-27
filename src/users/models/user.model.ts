@@ -1,23 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export enum ProfileType {
-  CLIENT = 'client',
-  RESTAURATEUR = 'restaurateur',
-  ADMIN = 'admin',
-}
-
-export enum Gender {
-  MALE = 'male',
-  FEMALE = 'female',
-  OTHER = 'other',
-}
-
 @Schema({ collection: 'users' })
 export class User extends Document {
-  @Prop({ required: true, unique: true })
-  username: string;
-
   @Prop({ required: true })
   firstName: string;
 
@@ -32,9 +17,6 @@ export class User extends Document {
 
   @Prop({ required: true })
   password: string;
-
-  @Prop({ enum: Gender, default: Gender.OTHER }) // Gender field with enum values
-  gender: string;
 
   @Prop({ type: Date, default: Date.now }) // createdAt field with a default value
   createdAt: Date;

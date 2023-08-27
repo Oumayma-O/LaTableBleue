@@ -60,3 +60,9 @@ export enum RestaurantFeature {
   WEDDING = 'Wedding',
   WINE_BAR = 'Wine Bar',
 }
+
+export enum RestaurantStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+}

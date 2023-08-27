@@ -1,137 +1,101 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import {Document, Model, Types} from 'mongoose';
-import {Cuisine, MealType, RestaurantFeature} from "./enums";
-import {Review} from "../../review/review.model";
-
-
-
-export type RestaurantDocument = Restaurant & Document;
+import { Document, Types } from 'mongoose';
+import {
+  RestaurantFeature,
+  Cuisine,
+  MealType,
+  RestaurantStatus,
+} from './enums';
+import { Caution } from './caution.model';
+import { Address, AddressSchema } from './address.model';
+import { MenuItem, MenuItemSchema } from './menuItem.model';
+import { SocialLinks, SocialLinksSchema } from './socialLinks.model';
+import {
+  OperatingHoursPerDay,
+  OperatingHoursPerDaySchema,
+} from './operatingHoursPerDay.model';
 
 @Schema()
-export class Restaurant {
-
-
+export class Restaurant extends Document {
   @Prop({ required: true, unique: true })
-  name: string;
+  restaurantName: string;
 
-  @Prop({ type: String, required: true, enum: Object.values(Cuisine) })
-  cuisine: string;
+  @Prop({ enum: Cuisine })
+  cuisine: Cuisine;
+
+  @Prop({ required: false, min: 1, max: 10 })
+  rating?: number;
+
+  @Prop({ type: Types.ObjectId, ref: 'Restaurateur' })
+  manager: Types.ObjectId; // Use 'ObjectId' type for the reference
 
   @Prop({ required: true })
-  address: string;
+  cancellationDeadline: number;
+
+  @Prop({ type: OperatingHoursPerDaySchema }) // Array of operating hours
+  operatingHours: OperatingHoursPerDay[];
+
+  @Prop([MenuItemSchema]) // Array of menu items
+  menu: MenuItem[];
+
+  @Prop({ type: Types.ObjectId, ref: 'Table' }) // Array of references to Table model
+  tables?: Types.ObjectId[];
 
   @Prop({ required: true })
-  city: string;
+  tableNumber: number;
 
-  @Prop({ default: 0 })
-  rating: number;
+  @Prop({ type: Types.ObjectId, ref: 'Booking' }) // Array of references to Booking model
+  bookingHistory?: Types.ObjectId[];
 
-  @Prop([
-    {
-      category: { type: String }, // Menu category (e.g., Entrantes, Ensaladas, Arroces, etc.)
-      items: [
-        {
-          name: { type: String }, // Menu item name (e.g., Pulpo a la parrilla con chimichurri)
-          price: { type: String }, // Price of the menu item (e.g., €29)
-          description: { type: String }, // Description of the menu item
-        },
-      ],
-    },
-  ])
-  menu?: {
-    category: string;
-    items: { name: string; price: string; description: string }[];
-  }[];
+  @Prop({ type: [String], enum: MealType })
+  meals: MealType[];
 
+  @Prop({ type: [String], enum: RestaurantFeature })
+  features: RestaurantFeature[];
 
-  @Prop({required: true})
+  @Prop({ type: [String] }) // Array of restaurant images
+  restaurantImages: string[];
+
+  @Prop({ type: Caution }) // Embed Caution subdocument
+  caution: Caution; // Use the name of the class as the type
+
+  @Prop({ type: AddressSchema, required: true })
+  address: Address;
+
+  @Prop({ required: true })
+  RestaurantPhoneNumber: string;
+
+  @Prop({ required: true })
+  averagePrice: number;
+
+  @Prop({ required: true }) // Description
   description: string;
 
-  @Prop({ type: [{ type: String }] })
-  images?: string[];
+  @Prop({ type: SocialLinksSchema }) // Embed SocialLinks subdocument
+  socialLinks: SocialLinks;
 
-  @Prop({
-    required: true,
-    type: {
-      fixedAmount: { type: Number, required: true },
-      weekendMultiplier: { type: Number, default: 1.2 },
-      specialOccasionMultiplier: { type: Number, default: 1.5 },
-      partySizeMultiplier: { type: Number, default: 1.1 },
-    },
-  })
-  caution: {
-    fixedAmount: number;
-    weekendMultiplier?: number;
-    specialOccasionMultiplier?: number;
-    partySizeMultiplier?: number;
-  };
+  @Prop() // Website link
+  websiteLink: string;
 
+  @Prop() // Foundation date
+  foundationDate: Date;
 
-  @Prop({ required: true })
-  CancellationDeadline: number;
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Review' }] }) // Array of references to Review model
+  reviews?: Types.ObjectId[]; // Use Types.ObjectId for the array of reviews
 
-  @Prop({ type: String })
-  website?: string;
+  @Prop({ default: RestaurantStatus.PENDING, enum: RestaurantStatus }) // Status: 'pending', 'approved', 'rejected', etc.
+  status: string;
 
+  @Prop({ type: Date }) // Timestamp when approved
+  approvalTimestamp?: Date;
 
-  @Prop({ type: Number })
-  averagePrice?: number;
-
-  @Prop({ type: String })
-  mapsLink?: string;
-
-  @Prop({ type: Date })
-  foundationDate?: Date;
-
-  @Prop({
-    type: [
-      {
-        day: {
-          type: String,
-          enum: [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-            'Sunday',
-          ],
-        },
-        intervals: [
-          {
-            openingTime: { type: String },
-            closingTime: { type: String },
-          },
-        ],
-      },
-    ],
-  })
-  operatingHours?: {
-    day: string;
-    intervals: { openingTime: string; closingTime: string }[];
-  }[];
-
-  @Prop({ type: [{ type: String, enum: Object.values(MealType) }] })
-  meals?: string[];
-
-  @Prop({ type: [{ type: String, enum: Object.values(RestaurantFeature) }] })
-  features?: string[];
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] })
-  tables: Types.ObjectId[]; // Array of references to Table documents
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Review' }] })
-  reviews: Types.ObjectId[];
-
+  @Prop({ type: Date }) // Timestamp when rejected
+  RejectionTimestamp?: Date;
 
   constructor(partial: Partial<Restaurant>) {
+    super(partial);
     Object.assign(this, partial);
   }
 }
 
-
-
 export const RestaurantSchema = SchemaFactory.createForClass(Restaurant);
-
-

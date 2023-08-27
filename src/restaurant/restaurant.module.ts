@@ -1,34 +1,27 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { RestaurantController } from './restaurant.controller';
 import { RestaurantService } from './restaurant.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Restaurant, RestaurantSchema } from './models/restaurant.model';
-import { TableModule } from '../table/table.module';
-import { RestaurantRepository } from './restaurant.repository';
-import { ReviewModule } from '../review/review.module';
-import { APP_FILTER } from '@nestjs/core';
-import { DuplicateKeyExceptionFilter } from '../filters/DuplicateKeyExceptionFilter';
-import {TableService} from "../table/table.service";
-import {Table, TableSchema} from "../table/table.model";
-import {Review, ReviewSchema} from "../review/review.model";
+import { EventEmitter2 } from 'eventemitter2';
+import { RestaurantDeletedEvent } from './restaurant..events';
 
+@Global()
 @Module({
   controllers: [RestaurantController],
   providers: [
     RestaurantService,
-    TableService,
-    RestaurantRepository,
     {
-      provide: APP_FILTER,
-      useClass: DuplicateKeyExceptionFilter,
+      provide: 'EventEmitter2', // Provide the EventEmitter2 token
+      useValue: new EventEmitter2(), // Create a new instance of EventEmitter2
     },
+    RestaurantDeletedEvent, // Provide the event class
   ],
   imports: [
     MongooseModule.forFeature([
-      { name: Restaurant.name, schema: RestaurantSchema },{ name: Table.name, schema: TableSchema }
+      { name: Restaurant.name, schema: RestaurantSchema },
     ]),
-      TableModule,
-
   ],
+  exports: [RestaurantService],
 })
 export class RestaurantModule {}

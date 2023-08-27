@@ -17,7 +17,7 @@ export class DuplicateKeyExceptionFilter implements ExceptionFilter {
       const response = host.switchToHttp().getResponse();
       response.status(HttpStatus.BAD_REQUEST).json({
         statusCode: HttpStatus.BAD_REQUEST,
-        message: `Duplicate key violation on field: ${duplicateField}`,
+        message: `User with this ${duplicateField} already exists`,
       });
     }
   }

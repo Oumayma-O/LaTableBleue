@@ -8,31 +8,25 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User } from './models/user.model';
-import { Restaurateur } from './models/restaurateur.model';
-import { Admin } from './models/admin.model';
-import { Guest } from './models/guest.model';
-import { CreateGuestDto } from './dto/createGuest.dto';
-import { CreateAdminDto } from './dto/createAdmin.dto';
-import { CreateRestaurateurDto } from './dto/createRestaurateur.dto';
+import { Restaurateur } from '../restaurateur/models/restaurateur.model';
+import { Admin } from '../admin/models/admin.model';
 import { UpdateUserDto } from './dto/updateUser.dto';
-import { UpdateGuestBioDto } from './dto/updateGuestBio.dto';
-import { UpdateCreditCardDetailsDto } from './dto/UpdateCreditCardDetails.dto';
-import { CreditCardDetails } from './models/creditCardDetails.model';
-import { CreateCreditCardDetailsDto } from './dto/createCreditCardDetails.dto';
 import { UserRole } from './UserRole.enum';
-import {ObjectId} from "mongodb";
-import {Review} from "../review/review.model";
+import { Guest } from '../guest/models/guest.model';
+import { GuestService } from "../guest/guest.service";
+import { AdminService } from "../admin/admin.service";
+import { RestaurateurService } from "../restaurateur/restaurateur.service";
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectModel(Guest.name) private guestModel: Model<Guest>,
-    @InjectModel(Admin.name) private adminModel: Model<Admin>,
-    @InjectModel(Restaurateur.name)
-    private restaurateurModel: Model<Restaurateur>,
+    @InjectModel(User.name) private userModel: Model<User>,
+    public guestService: GuestService,
+    public adminService: AdminService,
+    public restaurateurService: RestaurateurService,
   ) {}
 
-  private static async createUser(
+  public static async createUser(
     roleModel: Model<User>,
     createUserDto: CreateUserDto,
   ): Promise<User> {
@@ -49,29 +43,13 @@ export class UserService {
     return createdUser.save();
   }
 
-  async createGuest(createGuestDto: CreateGuestDto): Promise<User> {
-    return UserService.createUser(this.guestModel, createGuestDto);
-  }
-
-  async createAdmin(createAdminDto: CreateAdminDto): Promise<User> {
-    return UserService.createUser(this.adminModel, createAdminDto);
-  }
-
-  async createRestaurateur(
-    createRestaurateurDto: CreateRestaurateurDto,
-  ): Promise<User> {
-    return UserService.createUser(
-      this.restaurateurModel,
-      createRestaurateurDto,
-    );
-  }
-
-  private static async updateUser(
+  static async updateUser(
     roleModel: Model<User>,
     userId: string,
     updateDto: UpdateUserDto, // Replace with appropriate DTO type
   ): Promise<User> {
     // Retrieve the user to be updated
+
     const user = await roleModel.findById(userId);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -88,116 +66,12 @@ export class UserService {
     return user.save();
   }
 
-  async updateGuest(
-    userId: string,
-    updateDto: UpdateGuestBioDto,
+  async findUserByRoleAndUsername(
+    role: UserRole,
+    username: string,
   ): Promise<User> {
-    return UserService.updateUser(this.guestModel, userId, updateDto);
-  }
-
-  async updateAdmin(
-    userId: string,
-    updateAdminDto: UpdateUserDto,
-  ): Promise<User> {
-    return UserService.updateUser(this.adminModel, userId, updateAdminDto);
-  }
-
-  async updateRestaurateur(
-    userId: string,
-    updateRestaurateurDto: UpdateUserDto,
-  ): Promise<User> {
-    return UserService.updateUser(
-      this.restaurateurModel,
-      userId,
-      updateRestaurateurDto,
-    );
-  }
-
-  private static async deleteUser(
-    roleModel: Model<User>,
-    userId: string,
-  ): Promise<User> {
-    // Retrieve the user to be deleted
-    const user = await roleModel.findById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Delete the user
-    await user.deleteOne(); // Or user.deleteMany() for multiple documents
-    return user;
-  }
-
-  async deleteGuest(userId: string): Promise<User> {
-    return UserService.deleteUser(this.guestModel, userId);
-  }
-
-  async deleteAdmin(userId: string): Promise<User> {
-    return UserService.deleteUser(this.adminModel, userId);
-  }
-
-  async deleteRestaurateur(userId: string): Promise<User> {
-    return UserService.deleteUser(this.restaurateurModel, userId);
-  }
-
-  private static async softDeleteUser(
-    roleModel: Model<User>,
-    userId: string,
-  ): Promise<User> {
-    // Find the user to be "soft" deleted
-    const user = await roleModel.findByIdAndUpdate(
-      userId,
-      { deletedAt: new Date() },
-      { new: true },
-    );
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
-  }
-
-  async softDeleteGuest(userId: string): Promise<User> {
-    return UserService.softDeleteUser(this.guestModel, userId);
-  }
-
-  async softDeleteAdmin(userId: string): Promise<User> {
-    return UserService.softDeleteUser(this.adminModel, userId);
-  }
-
-  async softDeleteRestaurateur(userId: string): Promise<User> {
-    return UserService.softDeleteUser(this.restaurateurModel, userId);
-  }
-
-  async findAllGuests(): Promise<User[]> {
-    return this.guestModel.find({ deletedAt: null }).exec();
-  }
-
-  async findAllAdmins(): Promise<User[]> {
-    return this.adminModel.find({ deletedAt: null }).exec();
-  }
-
-  async findAllRestaurateurs(): Promise<User[]> {
-    return this.restaurateurModel.find({ deletedAt: null }).exec();
-  }
-
-  async findUserByUsername(username: string, role: string): Promise<User> {
-    let userModel: Model<User>;
-
-    switch (role) {
-      case 'guest':
-        userModel = this.guestModel;
-        break;
-      case 'admin':
-        userModel = this.adminModel;
-        break;
-      case 'restaurateur':
-        userModel = this.restaurateurModel;
-        break;
-      default:
-        throw new BadRequestException('Invalid role');
-    }
+    console.log(`fuu role: ${role}, username: ${username}`);
+    const userModel = this.getUserModelByRole(role);
 
     const user = await userModel.findOne({ username }).exec();
     if (!user) {
@@ -206,54 +80,8 @@ export class UserService {
     return user;
   }
 
-  async createCreditCardDetails(
-    userId: string,
-    createDto: CreateCreditCardDetailsDto,
-  ): Promise<Guest> {
-    const user = await this.guestModel.findById(userId).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    const hashedCardNumber = await bcrypt.hash(createDto.cardNumber, 10);
-    const hashedExpiryDate = await bcrypt.hash(createDto.expiryDate, 10);
-    const hashedCvv = await bcrypt.hash(createDto.cvv, 10);
-
-    user.creditCardDetails = new CreditCardDetails({
-      cardNumber: hashedCardNumber,
-      expiryDate: hashedExpiryDate,
-      cvv: hashedCvv,
-    });
-
-    return user.save();
-  }
-
-  async updateCreditCardDetails(
-    userId: string,
-    updateDto: UpdateCreditCardDetailsDto,
-  ): Promise<Guest> {
-    const user = await this.guestModel.findById(userId).exec();
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (!user.creditCardDetails) {
-      throw new NotFoundException('Credit card details not found');
-    }
-
-    for (const key in UpdateCreditCardDetailsDto) {
-      if (UpdateCreditCardDetailsDto[key]) {
-        user.creditCardDetails[key] = await bcrypt.hash(updateDto[key], 10);
-      }
-    }
-    await user.save();
-    return user;
-  }
-
-  async findUserModelById(
-    userId: string,
-    roleModel: Model<User>,
-  ): Promise<User> {
+  async findUserByRoleAndId(userId: string, role: UserRole): Promise<User> {
+    const roleModel = this.getUserModelByRole(role);
     const user = await roleModel.findById(userId).exec();
     if (!user) {
       throw new NotFoundException('User not found');
@@ -261,55 +89,29 @@ export class UserService {
     return user;
   }
 
+  async findUserByEmailAndRole(role: UserRole, email: string): Promise<User> {
+    console.log(`fuu role: ${role}, email: ${email}`);
+    const userModel = this.getUserModelByRole(role);
+
+    const user = await userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
   getUserModelByRole(role: UserRole): Model<User> {
+    console.log(`role: ${role}`);
     switch (role) {
       case UserRole.GUEST:
-        return this.guestModel;
+        return this.guestService.guestModel;
       case UserRole.ADMIN:
-        return this.adminModel;
+        return this.adminService.adminModel;
       case UserRole.RESTAURATEUR:
-        return this.restaurateurModel;
+        return this.restaurateurService.restaurateurModel;
       // Handle other roles if needed
       default:
-        throw new Error(`Unsupported role: ${role}`);
+        throw new NotFoundException(`Unsupported role: ${role}`);
     }
-  }
-
-  async addReviewToGuest(guestId: ObjectId, reviewId: ObjectId): Promise<void> {
-    const guest = await this.guestModel.findById(guestId).exec();
-    if (!guest) {
-      throw new NotFoundException(`Guest with id ${guestId} not found`);
-    }
-
-    guest.reviews.push(reviewId);
-    await guest.save();
-  }
-
-  async removeReviewFromGuest(userId: ObjectId, reviewId: ObjectId): Promise<void> {
-    const user = await this.guestModel.findById(userId).exec();
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
-
-    const reviewIndex = user.reviews.indexOf(reviewId);
-    if (reviewIndex !== -1) {
-      user.reviews.splice(reviewIndex, 1);
-      await user.save();
-    }
-  }
-
-  async getReviewsForGuest(guestId: string): Promise<Review[]> {
-    const guest = await this.guestModel
-        .findById(guestId)
-        .populate({
-          path: 'reviews',
-          model: 'Review',
-        })
-        .exec();
-    if (!guest) {
-      throw new NotFoundException(`Guest with id ${guestId} not found`);
-    }
-    const reviews: Review[] = guest.reviews as unknown as Review[];
-    return reviews;
   }
 }
