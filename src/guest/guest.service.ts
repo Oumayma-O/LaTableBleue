@@ -190,4 +190,40 @@ export class GuestService {
     const reviews: Review[] = guest.reviews as unknown as Review[];
     return reviews;
   }
+  async addRestoToSavedRestoList(
+    guestId: string,
+    restaurantId: ObjectId,
+  ): Promise<Guest> {
+    const guest = await this.guestModel.findById(guestId);
+    if (!guest) {
+      throw new NotFoundException(`Guest with id ${guestId} not found`);
+    }
+
+    // Check if the restaurant is already in the saved list
+    if (!guest.savedRestaurants.includes(restaurantId)) {
+      guest.savedRestaurants.push(restaurantId);
+      await guest.save();
+    }
+
+    return guest;
+  }
+
+  async removeRestoFromSavedRestoList(
+    guestId: string,
+    restaurantId: ObjectId,
+  ): Promise<Guest> {
+    const guest = await this.guestModel.findById(guestId);
+    if (!guest) {
+      throw new NotFoundException(`Guest with id ${guestId} not found`);
+    }
+
+    // Check if the restaurant is in the saved list
+    const restoIndex = guest.savedRestaurants.indexOf(restaurantId);
+    if (restoIndex !== -1) {
+      guest.savedRestaurants.splice(restoIndex, 1);
+      await guest.save();
+    }
+
+    return guest;
+  }
 }

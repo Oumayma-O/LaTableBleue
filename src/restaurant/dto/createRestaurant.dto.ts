@@ -48,7 +48,6 @@ export class CreateRestaurantDto {
   @IsString()
   description: string;
 
-  @IsNotEmpty()
   @Type(() => CreateMenuDto)
   menu: CreateMenuDto;
 

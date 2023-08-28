@@ -282,7 +282,7 @@ export class RestaurantService {
     return tablesWithDescription;
   }
 
-  private async getApprovedRestaurant(restaurantId: string) {
+  async getApprovedRestaurant(restaurantId: string) {
     const restaurant = await this.restaurantModel
       .findOne({
         _id: restaurantId,

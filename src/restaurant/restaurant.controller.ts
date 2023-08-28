@@ -99,6 +99,12 @@ export class RestaurantController {
     return this.restaurantService.findAll(query);
   }
 
+  @Public()
+  @Get(':restaurantId')
+  async getApprovedRestaurantById(@Param('restaurantId') restaurantId: string): Promise<Restaurant> {
+    return this.restaurantService.getApprovedRestaurant(restaurantId);
+  }
+
   @Patch(':restaurantId')
   @Roles(UserRole.RESTAURATEUR)
   async update(

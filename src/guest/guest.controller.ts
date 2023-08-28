@@ -10,6 +10,8 @@ import { CreatePaymentMethodDetailsDto } from "./dto/createPaymentMethodDetails.
 import { UpdatePaymentMethodDetailsDto } from "./dto/updatePaymentMethodDetailsDto";
 import { PaymentMethodType } from "./models/PaymentMethodDetails.model";
 import { Review } from "../review/models/review.model";
+import { ObjectId } from "mongodb";
+import { ParseObjectIdPipe } from "../Pipes/parse-object-id.pipe";
 
 @Controller('guest')
 export class GuestController {
@@ -95,5 +97,29 @@ export class GuestController {
   @Roles(UserRole.GUEST) // Only admin and guest roles are permitted
   async getReviewsForGuest(@Req() req): Promise<Review[]> {
     return this.guestService.getReviewsForGuest(req.jwtPayload.sub);
+  }
+
+  @Post('guestId/saved-restaurants/:restaurantId')
+  @Roles(UserRole.GUEST)
+  async addRestoToSavedRestoList(
+    @Req() req,
+    @Param('restaurantId', ParseObjectIdPipe) restaurantId: ObjectId,
+  ) {
+    return this.guestService.addRestoToSavedRestoList(
+      req.jwtPayload.sub,
+      restaurantId,
+    );
+  }
+
+  @Delete('saved-restaurants/:restaurantId')
+  @Roles(UserRole.GUEST)
+  async removeRestoFromSavedRestoList(
+    @Req() req,
+    @Param('restaurantId', ParseObjectIdPipe) restaurantId: ObjectId,
+  ) {
+    return this.guestService.removeRestoFromSavedRestoList(
+      req.jwtPayload.sub,
+      restaurantId,
+    );
   }
 }
