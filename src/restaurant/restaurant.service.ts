@@ -43,15 +43,11 @@ export class RestaurantService {
     restaurateurId: string,
     restaurantId: string,
   ): Promise<void> {
-    const restaurant = await this.restaurantModel.findById(restaurantId).exec();
-    if (restaurant) {
-      await restaurant.deleteOne();
-    } else {
-      throw new NotFoundException(`Restaurant not found`);
-    }
+    const restaurant = await this.getApprovedRestaurant(restaurantId);
+
     if (restaurateurId !== restaurant.manager.toString()) {
       throw new UnauthorizedException(
-        'you are not authorized to delete the restaurant',
+        'you are not authorized to delete this restaurant',
       );
     }
     this.deleteRestaurantAndAssociatedData(restaurantId);
@@ -83,11 +79,21 @@ export class RestaurantService {
   }
 
   async approveRestaurant(restaurantId: string): Promise<Restaurant> {
-    return this.changeRestaurantStatus(restaurantId, RestaurantStatus.APPROVED);
+    const restaurant = await this.findRestaurantById(restaurantId);
+    restaurant.status = RestaurantStatus.APPROVED;
+    restaurant.approvalTimestamp = new Date();
+
+    await restaurant.save();
+    return restaurant;
   }
 
   async rejectRestaurant(restaurantId: string): Promise<Restaurant> {
-    return this.changeRestaurantStatus(restaurantId, RestaurantStatus.REJECTED);
+    const restaurant = await this.findRestaurantById(restaurantId);
+    restaurant.status = RestaurantStatus.REJECTED;
+    restaurant.RejectionTimestamp = new Date();
+
+    await restaurant.save();
+    return restaurant;
   }
 
   private async changeRestaurantStatus(
@@ -100,14 +106,14 @@ export class RestaurantService {
     return restaurant;
   }
 
+  async findAll(query: any) {
+    return await this.restaurantModel.find(query);
+  }
+
   async getPendingRestaurants(): Promise<Restaurant[]> {
     return this.restaurantModel
       .find({ status: RestaurantStatus.PENDING })
       .exec();
-  }
-
-  async findAll(query: any) {
-    return await this.restaurantModel.find(query);
   }
 
   async getApprovedRestaurants(): Promise<Restaurant[]> {
@@ -128,15 +134,11 @@ export class RestaurantService {
     updateRestaurantDto: UpdateRestaurantDto,
   ): Promise<Restaurant> {
     // restaurateur verif
-    const restaurant = await this.restaurantModel.findById(restaurantId).exec();
-    if (restaurant) {
-      await restaurant.deleteOne();
-    } else {
-      throw new NotFoundException(`Restaurant not found`);
-    }
+    const restaurant = await this.getApprovedRestaurant(restaurantId);
+
     if (restaurateurId !== restaurant.manager.toString()) {
       throw new UnauthorizedException(
-        'you are not authorized to delete the restaurant',
+        'you are not authorized to update the restaurant',
       );
     }
     return await this.restaurantModel.findByIdAndUpdate(
@@ -152,13 +154,12 @@ export class RestaurantService {
     const restaurant = await this.restaurantModel
       .findOne({
         _id: restaurantId,
-        status: RestaurantStatus.APPROVED,
       })
       .exec();
 
     if (!restaurant) {
       throw new NotFoundException(
-        `Approved restaurant with id ${restaurantId} not found`,
+        ` restaurant with id ${restaurantId} not found`,
       );
     }
     return restaurant;
@@ -306,14 +307,10 @@ export class RestaurantService {
     restaurateurId: ObjectId,
     createTableDto: CreateTableDto,
   ): Promise<Table> {
-    const restaurant = await this.restaurantModel
-      .findById(createTableDto.restaurant)
-      .exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Restaurant with id ${createTableDto.restaurant} not found`,
-      );
-    }
+    const restaurant = await this.getApprovedRestaurant(
+      createTableDto.restaurant,
+    );
+
     if (restaurant.manager !== restaurateurId) {
       throw new NotFoundException('you are not authorized to add a table');
     }
@@ -329,13 +326,9 @@ export class RestaurantService {
     tableId: string,
     updateTableDto: UpdateTableDto,
   ): Promise<Table> {
-    const restaurant = await this.restaurantModel
-      .findOne({ tables: { $in: [tableId] } })
-      .exec();
+    const restaurant = await this.getApprovedRestaurant(restaurantId);
+    await this.findRestaurantTableById(restaurantId, tableId);
 
-    if (!restaurant) {
-      throw new NotFoundException('Table not found in the restaurant');
-    }
     if (restaurant.manager !== restaurateurId) {
       throw new NotFoundException('you are not authorized to update the table');
     }
@@ -353,17 +346,12 @@ export class RestaurantService {
     restaurantId: string,
     tableId: string,
   ): Promise<Table> {
-    const restaurant = await this.restaurantModel
-      .findOne({ tables: { $in: [tableId] } })
-      .exec();
+    const restaurant = await this.getApprovedRestaurant(restaurantId);
+    await this.findRestaurantTableById(restaurantId, tableId);
 
-    if (!restaurant) {
-      throw new NotFoundException('Table not found in the restaurant');
-    }
     if (restaurant.manager !== restaurateurId) {
       throw new NotFoundException('you are not authorized to delete the table');
     }
-    // should I just pull or verify bookings too ?
     return await this.tableService.deleteTable(tableId);
   }
 
@@ -383,14 +371,19 @@ export class RestaurantService {
 
     await this.removeTableFromRestaurant(restaurantId, tableId);
   }
+
   // ****** Reviews *******
 
   async getReviewsForRestaurant(restaurantId: ObjectId): Promise<Review[]> {
     const restaurant = await this.restaurantModel
-      .findById(restaurantId)
+      .findOne({
+        _id: restaurantId,
+        status: RestaurantStatus.APPROVED,
+      })
       .populate({
         path: 'reviews',
         model: 'Review',
+        match: { hidden: false }, // Filter out hidden reviews
       })
       .exec();
     if (!restaurant) {
@@ -403,12 +396,9 @@ export class RestaurantService {
   }
 
   async updateAverageRating(restaurantId: ObjectId): Promise<void> {
-    const restaurant = await this.restaurantModel.findById(restaurantId).exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Restaurant with id ${restaurantId} not found`,
-      );
-    }
+    const restaurant = await this.getApprovedRestaurant(
+      restaurantId.toString(),
+    );
     const reviews = await this.getReviewsForRestaurant(restaurantId);
     if (reviews && reviews.length > 0) {
       const totalRating = reviews.reduce(
@@ -425,12 +415,9 @@ export class RestaurantService {
     restaurantId: ObjectId,
     reviewId: ObjectId,
   ): Promise<void> {
-    const restaurant = await this.restaurantModel.findById(restaurantId).exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Restaurant with id ${restaurantId} not found`,
-      );
-    }
+    const restaurant = await this.getApprovedRestaurant(
+      restaurantId.toString(),
+    );
     restaurant.reviews.push(reviewId);
     await restaurant.save();
     await this.updateAverageRating(restaurantId);
@@ -439,7 +426,6 @@ export class RestaurantService {
   async handleReviewDeleted(deletedReview: Review) {
     const restaurantId = deletedReview.restaurant; // Assuming this is how the relationship is stored
     const reviewId = deletedReview._id;
-
     // Remove the review ID from the restaurant's reviews array
     await this.removeReviewFromRestaurant(restaurantId, reviewId);
   }
@@ -448,12 +434,9 @@ export class RestaurantService {
     restaurantId: ObjectId,
     reviewId: ObjectId,
   ): Promise<void> {
-    const restaurant = await this.restaurantModel.findById(restaurantId).exec();
-    if (!restaurant) {
-      throw new NotFoundException(
-        `Restaurant with id ${restaurantId} not found`,
-      );
-    }
+    const restaurant = await this.getApprovedRestaurant(
+      restaurantId.toString(),
+    );
     const reviewIndex = restaurant.reviews.indexOf(reviewId);
     if (reviewIndex !== -1) {
       restaurant.reviews.splice(reviewIndex, 1);

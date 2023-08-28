@@ -20,6 +20,8 @@ import { ConfigModule } from '@nestjs/config';
 import { GuestModule } from './guest/guest.module';
 import { AdminModule } from './admin/admin.module';
 import { RestaurateurModule } from './restaurateur/restaurateur.module';
+import { BullModule } from '@nestjs/bull';
+
 
 @Module({
   imports: [
@@ -42,6 +44,16 @@ import { RestaurateurModule } from './restaurateur/restaurateur.module';
     GuestModule,
     AdminModule,
     RestaurateurModule,
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+
+    BullModule.registerQueue({
+      name: 'reviews',
+    }),
   ],
   controllers: [AppController],
   providers: [

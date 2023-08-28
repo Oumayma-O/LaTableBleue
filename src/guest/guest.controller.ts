@@ -1,25 +1,15 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Put,
-  Req,
-  ValidationPipe,
-} from '@nestjs/common';
-import { GuestService } from './guest.service';
-import { Public } from '../auth/decorators/public.decorator';
-import { CreateUserDto } from '../users/dto/createUser.dto';
-import { User } from '../users/models/user.model';
-import { UpdateGuestBioDto } from './dto/updateGuestBio.dto';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../users/UserRole.enum';
-import { CreatePaymentMethodDetailsDto } from './dto/createPaymentMethodDetails.dto';
-import { UpdatePaymentMethodDetailsDto } from './dto/updatePaymentMethodDetailsDto';
-import { PaymentMethodType } from './models/PaymentMethodDetails.model';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, ValidationPipe } from "@nestjs/common";
+import { GuestService } from "./guest.service";
+import { Public } from "../auth/decorators/public.decorator";
+import { CreateUserDto } from "../users/dto/createUser.dto";
+import { User } from "../users/models/user.model";
+import { UpdateGuestBioDto } from "./dto/updateGuestBio.dto";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { UserRole } from "../users/UserRole.enum";
+import { CreatePaymentMethodDetailsDto } from "./dto/createPaymentMethodDetails.dto";
+import { UpdatePaymentMethodDetailsDto } from "./dto/updatePaymentMethodDetailsDto";
+import { PaymentMethodType } from "./models/PaymentMethodDetails.model";
+import { Review } from "../review/models/review.model";
 
 @Controller('guest')
 export class GuestController {
@@ -99,5 +89,11 @@ export class GuestController {
   ) {
     const userId = req.jwtPayload.sub;
     return this.guestService.deletePaymentMethod(userId, type);
+  }
+
+  @Get('reviews')
+  @Roles(UserRole.GUEST) // Only admin and guest roles are permitted
+  async getReviewsForGuest(@Req() req): Promise<Review[]> {
+    return this.guestService.getReviewsForGuest(req.jwtPayload.sub);
   }
 }

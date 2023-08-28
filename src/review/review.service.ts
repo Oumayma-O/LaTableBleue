@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -43,23 +44,29 @@ export class ReviewService {
     );
   }
 
+  async getAllReviews(): Promise<Review[]> {
+    return this.reviewModel.find().exec();
+  }
+
   async findReviewById(reviewId: string): Promise<Review> {
     const review = await this.reviewModel.findById(reviewId).exec();
     if (!review) {
-      throw new NotFoundException('Review not found');
+      throw new NotFoundException(`Review with id ${reviewId} not found`);
     }
     return review;
   }
 
   async findReviewsByRestaurantId(restaurantId: string): Promise<Review[]> {
     const reviews = await this.reviewModel
-      .find({ restaurant: restaurantId })
+      .find({ restaurant: restaurantId, hidden: false })
       .exec();
     return reviews;
   }
 
   async findReviewsByGuestId(guestId: string): Promise<Review[]> {
-    const reviews = await this.reviewModel.find({ guest: guestId }).exec();
+    const reviews = await this.reviewModel
+      .find({ guest: guestId, hidden: false })
+      .exec();
     return reviews;
   }
 
@@ -151,10 +158,13 @@ export class ReviewService {
 
   async addReportToReview(reviewId: string, reportId: string): Promise<void> {
     await this.reviewModel
-      .findByIdAndUpdate(reviewId, {
-        $push: { reports: reportId },
-        $inc: { reportCount: 1 },
-      })
+      .findOneAndUpdate(
+        { _id: reviewId, hidden: false }, // Add condition for hidden: false
+        {
+          $push: { reports: reportId },
+          $inc: { reportCount: 1 },
+        },
+      )
       .exec();
   }
 
@@ -163,14 +173,17 @@ export class ReviewService {
     reportId: string,
   ): Promise<void> {
     await this.reviewModel
-      .findByIdAndUpdate(reviewId, {
-        $pull: { reports: reportId },
-        $inc: { reportCount: -1 },
-      })
+      .findOneAndUpdate(
+        { _id: reviewId, hidden: false },
+        {
+          $pull: { reports: reportId },
+          $inc: { reportCount: -1 },
+        },
+      )
       .exec();
   }
 
-  async getAllReports(reviewId: string): Promise<Report[]> {
+  async getAllReports(userId: string, reviewId: string): Promise<Report[]> {
     const review = await this.reviewModel
       .findById(reviewId)
       .populate({
@@ -183,22 +196,31 @@ export class ReviewService {
       throw new NotFoundException(`Review with ID ${reviewId} not found`);
     }
 
+    if (review.guest.toString() !== userId) {
+      throw new UnauthorizedException(
+        'You are not authorized to view reports for this review',
+      );
+    }
+
     const reports: Report[] = review.reports as unknown as Report[];
     return reports;
   }
 
-  async updateReview(
+  async updateReviewByUser(
     userId: string,
     reviewId: string,
     updateReviewDto: UpdateReviewDto,
   ): Promise<Review> {
     const review = await this.findReviewById(reviewId);
-    if (!review) {
-      throw new NotFoundException(`Review with id ${reviewId} not found`);
-    }
+
     if (review.guest.toString() !== userId) {
       throw new UnauthorizedException(
         'You are not authorized to update this review',
+      );
+    }
+    if (review.hidden) {
+      throw new ForbiddenException(
+        'This review is hidden and cannot be updated',
       );
     }
     const updatedReview = await this.reviewModel
@@ -213,7 +235,7 @@ export class ReviewService {
     return updatedReview;
   }
 
-  async deleteUserReview(userId: string, reviewId: string): Promise<Review> {
+  async deleteReviewByUser(userId: string, reviewId: string): Promise<Review> {
     const review = await this.findReviewById(reviewId);
 
     if (review.guest.toString() !== userId) {
@@ -221,7 +243,17 @@ export class ReviewService {
         'You are not authorized to delete this review',
       );
     }
-
+    if (review.hidden) {
+      throw new ForbiddenException(
+        'This review is hidden and cannot be deleted',
+      );
+    }
     return await this.deleteReviewAndAssociatedReports(reviewId);
+  }
+
+  async hideReview(reviewId: string): Promise<void> {
+    const review = await this.findReviewById(reviewId);
+    review.hidden = true;
+    await review.save();
   }
 }

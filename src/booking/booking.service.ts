@@ -1,12 +1,12 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Booking } from './models/booking.model';
-import { GuestDeletedEvent } from "../guest/guest.events";
+import { GuestDeletedEvent } from '../guest/guest.events';
 import { EventEmitter2 } from 'eventemitter2';
-import { Guest } from "../guest/models/guest.model";
-import { RestaurantDeletedEvent } from "../restaurant/restaurant.events";
-import { Restaurant } from "../restaurant/models/restaurant.model";
+import { Guest } from '../guest/models/guest.model';
+import { RestaurantDeletedEvent } from '../restaurant/restaurant.events';
+import { Restaurant } from '../restaurant/models/restaurant.model';
 
 @Injectable()
 export class BookingService {
@@ -20,9 +20,12 @@ export class BookingService {
       this.handleGuestDeleted(event.deletedGuest);
     });
     // Listen for the restaurantDeleted event
-    this.eventEmitter.on('restaurantDeleted', (event: RestaurantDeletedEvent) => {
-      this.handleRestaurantDeleted(event.deletedRestaurant);
-    });
+    this.eventEmitter.on(
+      'restaurantDeleted',
+      (event: RestaurantDeletedEvent) => {
+        this.handleRestaurantDeleted(event.deletedRestaurant);
+      },
+    );
   }
   //getC
   async handleGuestDeleted(deletedGuest: Guest) {
