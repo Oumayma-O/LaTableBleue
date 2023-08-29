@@ -24,9 +24,23 @@
     "@nestjs/core": "^9.0.0",
     "@nestjs/mongoose": "^10.0.1",
     "@nestjs/platform-express": "^9.0.0",
+<<<<<<< Updated upstream
+=======
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
+    "bull": "^4.11.3",
+    "class-transformer": "^0.5.1",
+>>>>>>> Stashed changes
     "class-validator": "^0.14.0",
     "mongodb": "^5.7.0",
     "mongoose": "^7.4.1",
+<<<<<<< Updated upstream
+=======
+    "mongoose-paginate-v2": "^1.7.31",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+>>>>>>> Stashed changes
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
     "uuid": "^9.0.0"
