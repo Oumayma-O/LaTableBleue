@@ -5,18 +5,11 @@ import { UserModule } from '../users/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { BlacklistModule } from '../blacklist/blacklist.module';
 import { JwtPayloadGuard } from './guards/jwtPayload.guard';
-import { jwtConstants } from './constants';
+import { jwtConfig } from './jwt.config';
 
 @Global()
 @Module({
-  imports: [
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '600s' },
-    }),
-    UserModule,
-    BlacklistModule,
-  ],
+  imports: [JwtModule.registerAsync(jwtConfig), UserModule, BlacklistModule],
   controllers: [AuthController],
   providers: [AuthService, JwtPayloadGuard],
 })

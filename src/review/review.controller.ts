@@ -1,11 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req } from "@nestjs/common";
-import { ReviewService } from "./review.service";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { Review } from "./models/review.model";
-import { UserRole } from "../users/UserRole.enum";
-import { CreateReviewDto } from "./dto/createReview.dto";
-import { Report } from "../report/models/report.model";
-import { UpdateReviewDto } from "./dto/updateReview.dto";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Req,
+} from '@nestjs/common';
+import { ReviewService } from './review.service';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Review } from './models/review.model';
+import { UserRole } from '../users/UserRole.enum';
+import { CreateReviewDto } from './dto/createReview.dto';
+import { Report } from '../report/models/report.model';
+import { UpdateReviewDto } from './dto/updateReview.dto';
+import { ObjectId } from 'mongodb';
+import { ParseObjectIdPipe } from '../Pipes/parse-object-id.pipe';
 
 @Controller('review')
 export class ReviewController {
@@ -23,13 +34,18 @@ export class ReviewController {
     return this.reviewService.getReviewById(reviewId);
   }
 
-  @Post()
+  @Post(':restaurantId')
   @Roles(UserRole.GUEST)
   async createReview(
     @Req() req,
+    @Param('restaurantId', ParseObjectIdPipe) restaurantId: ObjectId,
     @Body() createReviewDto: CreateReviewDto,
   ): Promise<Review> {
-    return this.reviewService.CreateReview(req.jwtPayload.sub, createReviewDto);
+    return this.reviewService.CreateReview(
+      req.jwtPayload.sub,
+      restaurantId,
+      createReviewDto,
+    );
   }
 
   @Get(':reviewId/reports')
@@ -62,5 +78,17 @@ export class ReviewController {
     @Param('reviewId') reviewId: string,
   ): Promise<Review> {
     return this.reviewService.deleteReviewByUser(req.jwtPayload.sub, reviewId);
+  }
+
+  @Get('hidden')
+  @Roles(UserRole.ADMIN)
+  async getHiddenReviews() {
+    return this.reviewService.getHiddenReviews();
+  }
+
+  @Delete(':id/admin')
+  @Roles(UserRole.ADMIN)
+  async deleteReviewAndAssociatedReports(@Param('id') reviewId: string) {
+    return this.reviewService.deleteReviewAndAssociatedReports(reviewId);
   }
 }

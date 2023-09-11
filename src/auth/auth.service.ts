@@ -10,12 +10,18 @@ import { compare } from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/createUser.dto';
 import { BlacklistService } from '../blacklist/blacklist.service';
-import { BlacklistToken } from '../blacklist/blacklistToken.model';
+import { BlacklistToken } from '../blacklist/models/blacklistToken.model';
+import { GuestService } from '../guest/guest.service';
+import { RestaurateurService } from '../restaurateur/restaurateur.service';
+import { AdminService } from '../admin/admin.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
+    private guestService: GuestService,
+    private adminService: AdminService,
+    private restaurateurService: RestaurateurService,
     private jwtService: JwtService,
     private blacklistService: BlacklistService,
   ) {}
@@ -84,17 +90,15 @@ export class AuthService {
   }
 
   async signOutGuest(userId: string): Promise<void> {
-    await this.userService.guestService.deleteGuestWithAssociatedData(userId);
+    await this.guestService.deleteGuestWithAssociatedData(userId);
   }
 
   async signOutRestaurateur(userId: string): Promise<void> {
-    await this.userService.restaurateurService.deleteRestaurateurWithRestaurant(
-      userId,
-    );
+    await this.restaurateurService.deleteRestaurateurWithRestaurant(userId);
   }
 
   async signOutAdmin(userId: string): Promise<void> {
-    await this.userService.adminService.deleteAdminWithAssociatedData(userId);
+    await this.adminService.deleteAdminWithAssociatedData(userId);
   }
 
   async getProfile(userId: string, role: UserRole): Promise<User> {

@@ -1,4 +1,4 @@
-import { IsNumber, IsEnum, IsMongoId } from 'class-validator';
+import { IsNumber, IsEnum } from 'class-validator';
 import { TableDescription } from '../models/table.model';
 
 export class UpdateTableDto {
@@ -10,7 +10,4 @@ export class UpdateTableDto {
 
   @IsEnum(TableDescription)
   description: TableDescription;
-
-  @IsMongoId() // Ensure it's a valid MongoDB ObjectId
-  restaurant: string;
 }

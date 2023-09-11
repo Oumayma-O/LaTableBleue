@@ -13,7 +13,7 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 export class JwtPayloadGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly blacklistService: BlacklistService, // Inject the BlacklistService
+    private readonly blacklistService: BlacklistService,
     @Inject(Reflector) private readonly reflector: Reflector,
   ) {}
 

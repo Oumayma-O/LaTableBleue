@@ -13,15 +13,15 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { DuplicateKeyExceptionFilter } from './filters/DuplicateKeyExceptionFilter';
 import { JwtPayloadGuard } from './auth/guards/jwtPayload.guard';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './auth/constants';
 import { RolesGuard } from './auth/guards/Roles.guard';
 import { ReportModule } from './report/report.module';
 import { ConfigModule } from '@nestjs/config';
 import { GuestModule } from './guest/guest.module';
 import { AdminModule } from './admin/admin.module';
 import { RestaurateurModule } from './restaurateur/restaurateur.module';
-import { BullModule } from '@nestjs/bull';
-
+import { MenuModule } from './menu/menu.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { jwtConfig } from './auth/jwt.config';
 
 @Module({
   imports: [
@@ -29,6 +29,7 @@ import { BullModule } from '@nestjs/bull';
       isGlobal: true,
     }),
     MongooseModule.forRoot('mongodb://localhost:27017/LaTableBleue'),
+    JwtModule.registerAsync(jwtConfig),
     UserModule,
     ReviewModule,
     BookingModule,
@@ -36,24 +37,12 @@ import { BullModule } from '@nestjs/bull';
     TableModule,
     AuthModule,
     BlacklistModule,
-    JwtModule.register({
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '600s' },
-    }),
     ReportModule,
     GuestModule,
     AdminModule,
     RestaurateurModule,
-    BullModule.forRoot({
-      redis: {
-        host: 'localhost',
-        port: 6379,
-      },
-    }),
-
-    BullModule.registerQueue({
-      name: 'reviews',
-    }),
+    MenuModule,
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [

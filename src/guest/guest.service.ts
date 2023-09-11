@@ -1,6 +1,5 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -22,20 +21,17 @@ import { ObjectId } from 'mongodb';
 import { Review } from '../review/models/review.model';
 import { EventEmitter2 } from 'eventemitter2';
 import { GuestDeletedEvent } from './guest.events';
-import { ReviewDeletedEvent } from '../review/review.events';
+import { OnEvent } from '@nestjs/event-emitter';
+import { Restaurant } from '../restaurant/models/restaurant.model';
+import { RestaurantService } from '../restaurant/restaurant.service';
 
 @Injectable()
 export class GuestService {
   constructor(
     @InjectModel(Guest.name) public guestModel: Model<Guest>,
-    @Inject('EventEmitter2')
-    private readonly eventEmitter: EventEmitter2,
-  ) {
-    // Listen for the reviewDeleted event
-    this.eventEmitter.on('reviewDeleted', (event: ReviewDeletedEvent) => {
-      this.handleReviewDeleted(event.deletedReview);
-    });
-  }
+    private eventEmitter: EventEmitter2,
+    private restaurantService: RestaurantService,
+  ) {}
 
   async createGuest(createGuestDto: CreateUserDto): Promise<User> {
     return UserService.createUser(this.guestModel, createGuestDto);
@@ -153,6 +149,7 @@ export class GuestService {
     await guest.save();
   }
 
+  @OnEvent('reviewDeleted')
   async handleReviewDeleted(deletedReview: Review) {
     const guestId = deletedReview.guest; // Assuming this is how the relationship is stored
     const reviewId = deletedReview._id.toString();
@@ -225,5 +222,34 @@ export class GuestService {
     }
 
     return guest;
+  }
+
+  async getGuestById(guestId: string): Promise<Guest> {
+    const guest = await this.guestModel.findById(guestId).exec();
+    if (!guest) {
+      throw new NotFoundException(`Guest with id ${guestId} not found`);
+    }
+    return guest;
+  }
+
+  async addBookingToGuest(guest: Guest, booking: ObjectId) {
+    guest.bookings.push(booking);
+    await guest.save();
+  }
+
+  async getGuestSavedRestaurants(guestId: string): Promise<Restaurant[]> {
+    const guest = await this.guestModel.findById(guestId).exec();
+
+    if (!guest) {
+      throw new NotFoundException('Guest not found');
+    }
+
+    const savedRestaurantIds = guest.savedRestaurants;
+
+    // Fetch the actual Restaurant documents using the savedRestaurantIds
+    const savedRestaurants =
+      await this.restaurantService.getSavedRestaurantsByIds(savedRestaurantIds);
+
+    return savedRestaurants;
   }
 }

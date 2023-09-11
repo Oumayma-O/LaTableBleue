@@ -1,5 +1,4 @@
 import {
-  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -7,37 +6,25 @@ import {
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Restaurant } from './models/restaurant.model';
-import { TableService } from '../table/table.service';
 import { CreateRestaurantDto } from './dto/createRestaurant.dto';
 import { UpdateRestaurantDto } from './dto/updateRestaurant.dto';
-import { CreateTableDto } from '../table/dto/createTable.dto';
 import { Table } from '../table/models/table.model';
-import { UpdateTableDto } from '../table/dto/updateTable.dto';
 import { Review } from '../review/models/review.model';
 import { ObjectId } from 'mongodb';
 import { EventEmitter2 } from 'eventemitter2';
-import { ReviewDeletedEvent } from '../review/review.events';
 import { RestaurantDeletedEvent } from './restaurant.events';
 import { RestaurantStatus } from './models/enums';
-import { TableDeletedEvent } from '../table/table.events';
+import { OnEvent } from '@nestjs/event-emitter';
+import { CreateOperatingHoursDto } from './dto/createOperatingHours.dto';
+import { OperatingHours } from './models/operatingHours.model';
+import { Booking } from '../booking/models/booking.model';
 
 @Injectable()
 export class RestaurantService {
   constructor(
     @InjectModel(Restaurant.name) private restaurantModel: Model<Restaurant>,
-    @Inject('EventEmitter2')
-    private readonly eventEmitter: EventEmitter2,
-    private tableService: TableService,
-  ) {
-    // Listen for the reviewDeleted event
-    this.eventEmitter.on('reviewDeleted', (event: ReviewDeletedEvent) => {
-      this.handleReviewDeleted(event.deletedReview);
-    });
-    // Listen for the tableDeleted event
-    this.eventEmitter.on('tableDeleted', (event: TableDeletedEvent) => {
-      this.handletableDeleted(event.deletedTable);
-    });
-  }
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async deleteByRestaurateur(
     restaurateurId: string,
@@ -141,14 +128,53 @@ export class RestaurantService {
         'you are not authorized to update the restaurant',
       );
     }
-    return await this.restaurantModel.findByIdAndUpdate(
+    return this.restaurantModel.findByIdAndUpdate(
       restaurantId,
       updateRestaurantDto,
       { new: true },
     );
   }
 
-  // update Menu / update Operating Hours
+  async addMenuToResto(restaurantId: ObjectId, menuId): Promise<void> {
+    await this.restaurantModel.updateOne(
+      { _id: restaurantId },
+      { $push: { menus: menuId } },
+    );
+  }
+
+  async removeMenuFromResto(restaurantId, menuId): Promise<void> {
+    await this.restaurantModel.updateOne(
+      { _id: restaurantId },
+      { $pull: { menus: menuId } },
+    );
+  }
+
+  async addOperatingHours(
+    restaurateurId: ObjectId,
+    restaurantId: string,
+    createOperatingHoursDto: CreateOperatingHoursDto,
+  ) {
+    // Find the restaurant by ID
+    const restaurant = await this.getApprovedRestaurant(restaurantId);
+    if (restaurateurId !== restaurant.manager) {
+      throw new UnauthorizedException(
+        `You are not authorized to add operating hours to this restaurant`,
+      );
+    }
+
+    // Create an instance of OperatingHours and assign it
+    const operatingHours = new OperatingHours({ ...createOperatingHoursDto });
+
+    // Assign the operatingHours to the restaurant's property
+    restaurant.operatingHours = operatingHours;
+
+    // Save the updated restaurant document
+    await restaurant.save();
+
+    // Return the updated restaurant document
+    return restaurant;
+  }
+  // ********************
 
   async findRestaurantById(restaurantId: any): Promise<Restaurant> {
     const restaurant = await this.restaurantModel
@@ -303,56 +329,31 @@ export class RestaurantService {
     return restaurant;
   }
 
-  async addTableByRestaurateur(
-    restaurateurId: ObjectId,
-    createTableDto: CreateTableDto,
-  ): Promise<Table> {
-    const restaurant = await this.getApprovedRestaurant(
-      createTableDto.restaurant,
+  async addTableToRestaurant(
+    restaurantId: ObjectId,
+    tableId: ObjectId,
+  ): Promise<void> {
+    await this.restaurantModel.updateOne(
+      { _id: restaurantId },
+      { $push: { tables: tableId } },
     );
-
-    if (restaurant.manager !== restaurateurId) {
-      throw new NotFoundException('you are not authorized to add a table');
-    }
-    const createdTable = await this.tableService.createTable(createTableDto);
-    restaurant.tables.push(createdTable._id);
-    await restaurant.save();
-    return createdTable;
   }
 
-  async updateTableByRestaurateur(
-    restaurateurId: ObjectId,
+  async addTablesToRestaurant(
     restaurantId: string,
-    tableId: string,
-    updateTableDto: UpdateTableDto,
-  ): Promise<Table> {
-    const restaurant = await this.getApprovedRestaurant(restaurantId);
-    await this.findRestaurantTableById(restaurantId, tableId);
-
-    if (restaurant.manager !== restaurateurId) {
-      throw new NotFoundException('you are not authorized to update the table');
+    tableIds: ObjectId[],
+  ): Promise<void> {
+    try {
+      await this.restaurantModel
+        .updateOne(
+          { _id: restaurantId },
+          { $push: { tables: { $each: tableIds } } },
+        )
+        .exec();
+    } catch (error) {
+      // Handle any errors that may occur during the update
+      throw new Error(`Failed to add tables to restaurant: ${error.message}`);
     }
-
-    const updatedTable = await this.tableService.updateTable(
-      tableId,
-      updateTableDto,
-    );
-
-    return updatedTable;
-  }
-
-  async deleteTableByRestaurateur(
-    restaurateurId: ObjectId,
-    restaurantId: string,
-    tableId: string,
-  ): Promise<Table> {
-    const restaurant = await this.getApprovedRestaurant(restaurantId);
-    await this.findRestaurantTableById(restaurantId, tableId);
-
-    if (restaurant.manager !== restaurateurId) {
-      throw new NotFoundException('you are not authorized to delete the table');
-    }
-    return await this.tableService.deleteTable(tableId);
   }
 
   private async removeTableFromRestaurant(
@@ -365,6 +366,7 @@ export class RestaurantService {
     );
   }
 
+  @OnEvent('tableDeleted')
   private async handletableDeleted(deletedTable: Table) {
     const restaurantId = deletedTable.restaurant; // Assuming this is how the relationship is stored
     const tableId = deletedTable._id;
@@ -423,6 +425,7 @@ export class RestaurantService {
     await this.updateAverageRating(restaurantId);
   }
 
+  @OnEvent('reviewDeleted')
   async handleReviewDeleted(deletedReview: Review) {
     const restaurantId = deletedReview.restaurant; // Assuming this is how the relationship is stored
     const reviewId = deletedReview._id;
@@ -446,4 +449,67 @@ export class RestaurantService {
   }
 
   // ****** Bookings *******
+
+  async calculateBookingDetails(booking: Booking): Promise<void> {
+    // Find the restaurant associated with the booking
+    const restaurant = await this.getApprovedRestaurant(
+      booking.restaurant.toString(),
+    );
+
+    // Find the caution details for the restaurant
+    const cautionDetails = restaurant.caution;
+
+    // Calculate caution amount based on restaurant's caution details
+    let cautionAmount = cautionDetails.fixedAmount;
+
+    // Check if it's a weekend booking and apply the multiplier
+    const bookingDay = booking.dateTime.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    if (bookingDay === 5 || bookingDay === 6) {
+      cautionAmount *= cautionDetails.weekendMultiplier;
+    }
+
+    // Check if it's a special occasion booking and apply the multiplier
+    // Replace this condition with your logic for detecting special occasions
+    const isSpecialOccasion = false; // Replace with your logic
+    if (isSpecialOccasion) {
+      cautionAmount *= cautionDetails.specialOccasionMultiplier;
+    }
+
+    // Apply the party size multiplier
+    cautionAmount *= cautionDetails.partySizeMultiplier * booking.partySize;
+
+    // Set the calculated caution amount in the booking
+    booking.cautionAmount = cautionAmount;
+
+    // Calculate payment deadline and set it in the booking
+    const paymentDelayHours = cautionDetails.paymentDelay;
+    const paymentDeadline = new Date(booking.dateTime);
+    paymentDeadline.setHours(paymentDeadline.getHours() + paymentDelayHours);
+    booking.paymentDelay = paymentDeadline;
+
+    // Calculate cancellation deadline and set it in the booking
+    const cancellationDeadline = new Date(booking.dateTime);
+    cancellationDeadline.setHours(
+      cancellationDeadline.getHours() + restaurant.cancellationDeadline,
+    );
+    booking.cancellationDeadline = cancellationDeadline;
+
+    await booking.save();
+  }
+
+  async addBookingToRestaurant(restaurant: Restaurant, booking: ObjectId) {
+    restaurant.bookingHistory.push(booking);
+    await restaurant.save();
+  }
+
+  async getSavedRestaurantsByIds(
+    savedRestaurantIds: ObjectId[],
+  ): Promise<Restaurant[]> {
+    // Fetch the actual Restaurant documents using the savedRestaurantIds
+    const savedRestaurants = await this.restaurantModel
+      .find({ _id: { $in: savedRestaurantIds } })
+      .exec();
+
+    return savedRestaurants;
+  }
 }

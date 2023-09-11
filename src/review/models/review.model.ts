@@ -32,6 +32,9 @@ export class Review extends Document {
   @Prop({ default: false })
   hidden: boolean;
 
+  @Prop({ type: Date, default: Date.now }) // createdAt field with a default value
+  createdAt: Date;
+
   // Constructor for initializing the review model.
   constructor(partial: Partial<Review>) {
     super(partial);

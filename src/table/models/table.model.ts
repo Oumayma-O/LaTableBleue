@@ -16,8 +16,8 @@ export enum TableDescription {
 }
 
 @Schema()
-export class Table extends Document{
-  @Prop({ required: true, unique: true })
+export class Table extends Document {
+  @Prop({ required: true })
   number: number;
 
   @Prop({ required: true })
@@ -32,8 +32,8 @@ export class Table extends Document{
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
   bookings?: Types.ObjectId[];
 
-  @Prop({ type: Date, default: null }) // Soft delete timestamp
-  deletedAt?: Date;
+  @Prop({ type: Date, default: Date.now })
+  createdAt: Date;
 
   constructor(partial: Partial<Table>) {
     super(partial);

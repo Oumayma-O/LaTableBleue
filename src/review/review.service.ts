@@ -15,12 +15,12 @@ import { RestaurantService } from '../restaurant/restaurant.service';
 import { Rating } from './models/rating.model';
 import { ObjectId } from 'mongodb';
 import { Report } from '../report/models/report.model';
-import { GuestDeletedEvent } from '../guest/guest.events';
 import EventEmitter2 from 'eventemitter2';
 import { Guest } from '../guest/models/guest.model';
 import { ReviewDeletedEvent } from './review.events';
-import { RestaurantDeletedEvent } from '../restaurant/restaurant.events';
 import { Restaurant } from '../restaurant/models/restaurant.model';
+import { OnEvent } from '@nestjs/event-emitter';
+import { GuestService } from '../guest/guest.service';
 
 @Injectable()
 export class ReviewService {
@@ -29,20 +29,9 @@ export class ReviewService {
     private reviewModel: Model<Review>,
     @Inject('EventEmitter2') private readonly eventEmitter: EventEmitter2, // Inject the EventEmitter2
     private userService: UserService,
+    private guestService: GuestService,
     private restaurantService: RestaurantService,
-  ) {
-    // Listen for the guestDeleted event
-    this.eventEmitter.on('guestDeleted', (event: GuestDeletedEvent) => {
-      this.handleGuestDeleted(event.deletedGuest);
-    });
-    // Listen for the restaurantDeleted event
-    this.eventEmitter.on(
-      'restaurantDeleted',
-      (event: RestaurantDeletedEvent) => {
-        this.handleRestaurantDeleted(event.deletedRestaurant);
-      },
-    );
-  }
+  ) {}
 
   async getAllReviews(): Promise<Review[]> {
     return this.reviewModel.find().exec();
@@ -70,6 +59,7 @@ export class ReviewService {
     return reviews;
   }
 
+  @OnEvent('guestDeleted')
   async handleGuestDeleted(deletedGuest: Guest) {
     // Get reviews associated with the deleted guest
     const reviewsToDelete = await this.findReviewsByGuestId(deletedGuest._id);
@@ -80,6 +70,7 @@ export class ReviewService {
     }
   }
 
+  @OnEvent('restaurantDeleted')
   async handleRestaurantDeleted(deletedRestaurant: Restaurant) {
     const restaurantId = deletedRestaurant._id;
 
@@ -114,8 +105,8 @@ export class ReviewService {
   }
 
   private calculateAverageRating(rating: Rating): number {
-    const { foodRating, serviceRating, ambienceRating } = rating;
-    const totalRatings = foodRating + serviceRating + ambienceRating;
+    const { foodRating, serviceRating, ambianceRating } = rating;
+    const totalRatings = foodRating + serviceRating + ambianceRating;
     const averageRating = totalRatings / 3; // Assuming you have 3 rating categories
 
     return averageRating;
@@ -123,9 +114,9 @@ export class ReviewService {
 
   async CreateReview(
     userId: ObjectId,
+    restaurantId: ObjectId,
     createReviewDto: CreateReviewDto,
   ): Promise<Review> {
-    const restaurantId = createReviewDto.restaurant;
     // Check if the provided restaurantId is valid
     const restaurant = await this.restaurantService.findRestaurantById(
       restaurantId,
@@ -135,17 +126,20 @@ export class ReviewService {
         `Restaurant with id ${restaurantId} not found`,
       );
     }
-    const review = new this.reviewModel(createReviewDto);
-    review.guest = userId;
+    const review = new this.reviewModel({
+      ...createReviewDto,
+      restaurant: restaurantId,
+      guest: userId,
+    });
     review.rating.averageRating = this.calculateAverageRating(review.rating);
-
+    const createdReview = await review.save();
     // Add the review ID to the restaurant's reviews array
     await this.restaurantService.addReviewToRestaurant(
-      createReviewDto.restaurant,
-      review._id,
+      restaurant._id,
+      createdReview._id,
     );
-    await this.userService.guestService.addReviewToGuest(userId, review._id);
-    return review;
+    await this.guestService.addReviewToGuest(userId, createdReview._id);
+    return createdReview;
   }
 
   async getReviewById(id: string): Promise<Review> {
@@ -255,5 +249,31 @@ export class ReviewService {
     const review = await this.findReviewById(reviewId);
     review.hidden = true;
     await review.save();
+  }
+
+  @OnEvent('reportCreated')
+  async handleReportCreated(report: Report) {
+    try {
+      console.log('handling reportCreated event...');
+
+      // Retrieve the associated review based on the report data
+      const review = await this.findReviewById(report.review.toString());
+
+      // Convert process.env.HIDE_THRESHOLD to a number
+      const hideThreshold = 5;
+
+      // Check if the report count has reached the HIDE_THRESHOLD
+      if (review.reportCount >= hideThreshold) {
+        // Hide the review if the threshold is reached
+        await this.hideReview(review._id);
+      }
+    } catch (error) {
+      // Handle any errors that occur during the process
+      console.error(`Error handling 'reportCreated' event: ${error.message}`);
+    }
+  }
+
+  async getHiddenReviews(): Promise<Review[]> {
+    return this.reviewModel.find({ hidden: true }).exec();
   }
 }

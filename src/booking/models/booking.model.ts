@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 import { BookingState } from './enums';
 
 @Schema()
-export class Booking extends Document{
+export class Booking extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Guest' })
   guest: Types.ObjectId;
 
@@ -14,10 +14,13 @@ export class Booking extends Document{
   dateTime: Date;
 
   @Prop({ required: true })
-  numberOfPersons: number;
+  partySize: number;
 
   @Prop({ default: 0 })
   cautionAmount: number;
+
+  @Prop()
+  specialRequest?: string;
 
   @Prop({ enum: BookingState, default: BookingState.PENDING })
   bookingState: BookingState;
@@ -41,6 +44,12 @@ export class Booking extends Document{
 
   @Prop({ type: Date })
   paymentDelay: Date;
+
+  @Prop({ default: false })
+  cautionPayed: boolean;
+
+  @Prop({ default: false })
+  reservationComplete: boolean;
 
   constructor(partial: Partial<Booking>) {
     super(partial);

@@ -12,7 +12,7 @@ export class RestaurateurController {
   constructor(private readonly restaurateurService: RestaurateurService) {}
 
   @Public()
-  @Post('restaurateurs')
+  @Post()
   createRestaurateur(@Body() createUserDto: CreateUserDto) {
     return this.restaurateurService.createRestaurateur(createUserDto);
   }

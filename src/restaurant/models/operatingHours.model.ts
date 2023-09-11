@@ -17,6 +17,10 @@ export class Interval {
 
   @Prop({ required: true })
   closingTime: string;
+
+  constructor(partial: Partial<Interval>) {
+    Object.assign(this, partial);
+  }
 }
 export const IntervalSchema = SchemaFactory.createForClass(Interval);
 
@@ -27,7 +31,23 @@ export class OperatingHoursPerDay {
 
   @Prop({ type: [IntervalSchema], required: true })
   intervals: Interval[];
+
+  constructor(partial: Partial<OperatingHoursPerDay>) {
+    Object.assign(this, partial);
+  }
 }
 
 export const OperatingHoursPerDaySchema =
   SchemaFactory.createForClass(OperatingHoursPerDay);
+
+export class OperatingHours {
+  @Prop({ type: [OperatingHoursPerDaySchema], required: true })
+  days: OperatingHoursPerDay[];
+
+  constructor(partial: Partial<OperatingHours>) {
+    Object.assign(this, partial);
+  }
+}
+
+export const OperatingHoursSchema =
+  SchemaFactory.createForClass(OperatingHours);

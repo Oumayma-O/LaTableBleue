@@ -5,7 +5,7 @@ import {
   ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DayOfWeek } from '../models/operatingHoursPerDay.model';
+import { DayOfWeek } from '../models/operatingHours.model';
 
 export class CreateIntervalDto {
   @IsNotEmpty()

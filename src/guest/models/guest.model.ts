@@ -6,12 +6,12 @@ import {
 } from './PaymentMethodDetails.model';
 import { User } from '../../users/models/user.model';
 import { Address, AddressSchema } from '../../restaurant/models/address.model';
-import { Booking } from "../../booking/models/booking.model";
-import { Review } from "../../review/models/review.model";
+import { Booking } from '../../booking/models/booking.model';
+import { Review } from '../../review/models/review.model';
 
 @Schema()
 export class Guest extends User {
-  @Prop({ required: false, unique: true })
+  @Prop({ required: false })
   ReviewDisplayName?: string;
 
   @Prop({ required: false, type: Date })

@@ -17,11 +17,9 @@ import { Restaurant } from './models/restaurant.model';
 import { Public } from '../auth/decorators/public.decorator';
 import { UpdateRestaurantDto } from './dto/updateRestaurant.dto';
 import { Table } from '../table/models/table.model';
-import { CreateTableDto } from '../table/dto/createTable.dto';
-import { UpdateTableDto } from '../table/dto/updateTable.dto';
-import { Review } from "../review/models/review.model";
-import { ObjectId } from "mongodb";
-import { ParseObjectIdPipe } from "../Pipes/parse-object-id.pipe";
+import { Review } from '../review/models/review.model';
+import { ObjectId } from 'mongodb';
+import { ParseObjectIdPipe } from '../Pipes/parse-object-id.pipe';
 
 @Controller('restaurant')
 export class RestaurantController {
@@ -39,7 +37,7 @@ export class RestaurantController {
     );
   }
 
-  @Delete(':restaurantId')
+  @Delete('admin/:restaurantId')
   @Roles(UserRole.ADMIN)
   async deleteRestaurantAndAssociatedData(
     @Param('restaurantId') restaurantId: string,
@@ -59,7 +57,7 @@ export class RestaurantController {
     return this.restaurantService.create(restaurateurId, createRestaurantDto);
   }
 
-  @Patch(':restaurantId/approve')
+  @Patch('approve/:restaurantId')
   @Roles(UserRole.ADMIN)
   async approveRestaurant(
     @Param('restaurantId') restaurantId: string,
@@ -67,7 +65,7 @@ export class RestaurantController {
     return this.restaurantService.approveRestaurant(restaurantId);
   }
 
-  @Patch(':restaurantId/reject')
+  @Patch('reject/:restaurantId')
   @Roles(UserRole.ADMIN)
   async rejectRestaurant(
     @Param('restaurantId') restaurantId: string,
@@ -100,8 +98,10 @@ export class RestaurantController {
   }
 
   @Public()
-  @Get(':restaurantId')
-  async getApprovedRestaurantById(@Param('restaurantId') restaurantId: string): Promise<Restaurant> {
+  @Get('approved/:restaurantId')
+  async getApprovedRestaurantById(
+    @Param('restaurantId') restaurantId: string,
+  ): Promise<Restaurant> {
     return this.restaurantService.getApprovedRestaurant(restaurantId);
   }
 
@@ -229,52 +229,6 @@ export class RestaurantController {
     return this.restaurantService.findRestaurantTablesByDescription(
       restaurantId,
       description,
-    );
-  }
-
-  @Post(':restaurantId/tables')
-  @Roles(UserRole.RESTAURATEUR)
-  async addTableByRestaurateur(
-    @Req() req,
-    @Param('restaurantId') restaurantId: string,
-    @Body() createTableDto: CreateTableDto,
-  ): Promise<Table> {
-    const restaurateurId = req.jwtPayload.sub;
-    return this.restaurantService.addTableByRestaurateur(
-      restaurateurId,
-      createTableDto,
-    );
-  }
-
-  @Patch(':restaurantId/tables/:tableId')
-  @Roles(UserRole.RESTAURATEUR)
-  async updateTableByRestaurateur(
-    @Req() req,
-    @Param('restaurantId') restaurantId: string,
-    @Param('tableId') tableId: string,
-    @Body() updateTableDto: UpdateTableDto,
-  ): Promise<Table> {
-    const restaurateurId = req.jwtPayload.sub;
-    return this.restaurantService.updateTableByRestaurateur(
-      restaurateurId,
-      restaurantId,
-      tableId,
-      updateTableDto,
-    );
-  }
-
-  @Delete(':restaurantId/tables/:tableId')
-  @Roles(UserRole.RESTAURATEUR)
-  async deleteTableByRestaurateur(
-    @Req() req,
-    @Param('restaurantId') restaurantId: string,
-    @Param('tableId') tableId: string,
-  ): Promise<Table> {
-    const restaurateurId = req.jwtPayload.sub;
-    return this.restaurantService.deleteTableByRestaurateur(
-      restaurateurId,
-      restaurantId,
-      tableId,
     );
   }
 

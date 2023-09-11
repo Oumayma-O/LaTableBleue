@@ -6,10 +6,10 @@ import {
   IsString,
   IsArray,
   IsUrl,
-  IsOptional, ValidateNested, IsMongoId
-} from "class-validator";
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { ObjectId } from "mongodb";
 
 export class CreateRatingDto {
   @IsNotEmpty()
@@ -32,10 +32,6 @@ export class CreateRatingDto {
 }
 
 export class CreateReviewDto {
-  @IsNotEmpty()
-  @IsMongoId()
-  restaurant: ObjectId; // Restaurant ID being reviewed.
-
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => CreateRatingDto)

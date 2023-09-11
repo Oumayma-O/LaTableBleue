@@ -3,6 +3,10 @@ import { Type } from 'class-transformer';
 
 export class CreateMenuDto {
   @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsNotEmpty()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateMenuItemDto)
@@ -11,6 +15,7 @@ export class CreateMenuDto {
 
 export class CreateMenuItemDto {
   @IsNotEmpty()
+  @IsString()
   category: string;
 
   @IsNotEmpty()

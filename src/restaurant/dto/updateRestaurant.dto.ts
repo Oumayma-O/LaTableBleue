@@ -7,18 +7,17 @@ import {
   IsNumber,
   IsUrl,
   IsArray,
-  ValidateNested,
-} from 'class-validator';
+  ValidateNested, IsNotEmpty
+} from "class-validator";
 import { Type } from 'class-transformer';
 import { UpdateCautionDto } from './caution.dto';
 import { Cuisine, MealType, RestaurantFeature } from '../models/enums';
 import { SocialLinksDto } from './socialLinks.dto';
 import { UpdateAddressDto } from './Address.dto';
+import { CreateReservationDetailsDto } from "./createReservationDetails.dto";
+import { UpdateReservationDetailsDto } from "./updateReservationDetails.dto";
 
 export class UpdateRestaurantDto {
-  @IsString()
-  restaurantName: string;
-
   @IsNumber()
   tableNumber: number;
 
@@ -54,6 +53,11 @@ export class UpdateRestaurantDto {
   @ValidateNested()
   @Type(() => UpdateCautionDto)
   caution: UpdateCautionDto;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => UpdateReservationDetailsDto)
+  reservationDetails: UpdateReservationDetailsDto;
 
   @ValidateNested()
   @Type(() => UpdateAddressDto)

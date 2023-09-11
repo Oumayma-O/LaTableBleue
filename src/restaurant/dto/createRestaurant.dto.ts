@@ -2,21 +2,20 @@ import {
   IsNotEmpty,
   IsString,
   IsEnum,
-  Min,
-  Max,
   IsPhoneNumber,
   IsNumber,
   IsUrl,
   IsArray,
   ValidateNested,
+  IsDate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateCautionDto } from './caution.dto';
 import { Cuisine, MealType, RestaurantFeature } from '../models/enums';
-import { CreateMenuDto } from './createMenu.dto';
 import { SocialLinksDto } from './socialLinks.dto';
 import { CreateAddressDto } from './Address.dto';
 import { CreateOperatingHoursDto } from './createOperatingHours.dto';
+import { CreateReservationDetailsDto } from './createReservationDetails.dto';
 
 export class CreateRestaurantDto {
   @IsNotEmpty()
@@ -31,12 +30,6 @@ export class CreateRestaurantDto {
   @IsEnum(Cuisine)
   cuisine: Cuisine;
 
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(1)
-  @Max(10)
-  rating: number;
-
   @IsPhoneNumber()
   RestaurantPhoneNumber: string;
 
@@ -48,13 +41,11 @@ export class CreateRestaurantDto {
   @IsString()
   description: string;
 
-  @Type(() => CreateMenuDto)
-  menu: CreateMenuDto;
+  @IsDate()
+  foundationDate: Date;
 
-  @IsArray()
-  @ValidateNested({ each: true })
   @Type(() => CreateOperatingHoursDto)
-  operatingHours: CreateOperatingHoursDto[];
+  operatingHours: CreateOperatingHoursDto;
 
   @IsNotEmpty()
   @IsArray()
@@ -81,8 +72,17 @@ export class CreateRestaurantDto {
   @Type(() => CreateAddressDto)
   address: CreateAddressDto;
 
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => CreateReservationDetailsDto)
+  reservationDetails: CreateReservationDetailsDto;
+
   @IsUrl()
   websiteLink: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  cancellationDeadline: number;
 
   @ValidateNested()
   @Type(() => SocialLinksDto)

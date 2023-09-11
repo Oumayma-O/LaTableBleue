@@ -59,6 +59,8 @@ export enum RestaurantFeature {
   TRENDY = 'Trendy',
   WEDDING = 'Wedding',
   WINE_BAR = 'Wine Bar',
+  OUTDOOR_SITTING = 'Outdoor Seating',
+  LIVE_MUSIC = 'Live Music',
 }
 
 export enum RestaurantStatus {

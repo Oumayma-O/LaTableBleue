@@ -8,22 +8,19 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/createUser.dto';
 import { User } from './models/user.model';
-import { Restaurateur } from '../restaurateur/models/restaurateur.model';
-import { Admin } from '../admin/models/admin.model';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { UserRole } from './UserRole.enum';
-import { Guest } from '../guest/models/guest.model';
-import { GuestService } from "../guest/guest.service";
-import { AdminService } from "../admin/admin.service";
-import { RestaurateurService } from "../restaurateur/restaurateur.service";
+import { GuestService } from '../guest/guest.service';
+import { AdminService } from '../admin/admin.service';
+import { RestaurateurService } from '../restaurateur/restaurateur.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    public guestService: GuestService,
-    public adminService: AdminService,
-    public restaurateurService: RestaurateurService,
+    private guestService: GuestService,
+    private adminService: AdminService,
+    private restaurateurService: RestaurateurService,
   ) {}
 
   public static async createUser(
@@ -40,6 +37,7 @@ export class UserService {
       password: hashedPassword,
     });
 
+    console.log(createdUser);
     return createdUser.save();
   }
 

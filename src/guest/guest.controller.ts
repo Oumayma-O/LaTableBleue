@@ -1,17 +1,28 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, ValidationPipe } from "@nestjs/common";
-import { GuestService } from "./guest.service";
-import { Public } from "../auth/decorators/public.decorator";
-import { CreateUserDto } from "../users/dto/createUser.dto";
-import { User } from "../users/models/user.model";
-import { UpdateGuestBioDto } from "./dto/updateGuestBio.dto";
-import { Roles } from "../auth/decorators/roles.decorator";
-import { UserRole } from "../users/UserRole.enum";
-import { CreatePaymentMethodDetailsDto } from "./dto/createPaymentMethodDetails.dto";
-import { UpdatePaymentMethodDetailsDto } from "./dto/updatePaymentMethodDetailsDto";
-import { PaymentMethodType } from "./models/PaymentMethodDetails.model";
-import { Review } from "../review/models/review.model";
-import { ObjectId } from "mongodb";
-import { ParseObjectIdPipe } from "../Pipes/parse-object-id.pipe";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Req,
+  ValidationPipe,
+} from '@nestjs/common';
+import { GuestService } from './guest.service';
+import { Public } from '../auth/decorators/public.decorator';
+import { CreateUserDto } from '../users/dto/createUser.dto';
+import { User } from '../users/models/user.model';
+import { UpdateGuestBioDto } from './dto/updateGuestBio.dto';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/UserRole.enum';
+import { CreatePaymentMethodDetailsDto } from './dto/createPaymentMethodDetails.dto';
+import { UpdatePaymentMethodDetailsDto } from './dto/updatePaymentMethodDetailsDto';
+import { PaymentMethodType } from './models/PaymentMethodDetails.model';
+import { Review } from '../review/models/review.model';
+import { ObjectId } from 'mongodb';
+import { ParseObjectIdPipe } from '../Pipes/parse-object-id.pipe';
 
 @Controller('guest')
 export class GuestController {
@@ -99,7 +110,7 @@ export class GuestController {
     return this.guestService.getReviewsForGuest(req.jwtPayload.sub);
   }
 
-  @Post('guestId/saved-restaurants/:restaurantId')
+  @Post('saved-restaurants/:restaurantId')
   @Roles(UserRole.GUEST)
   async addRestoToSavedRestoList(
     @Req() req,
@@ -121,5 +132,18 @@ export class GuestController {
       req.jwtPayload.sub,
       restaurantId,
     );
+  }
+
+  @Get('saved-restaurants')
+  @Roles(UserRole.GUEST)
+  async getGuestSavedRestaurants(@Req() req) {
+    const savedRestaurants = await this.guestService.getGuestSavedRestaurants(
+      req.jwtPayload.sub,
+    );
+
+    return {
+      message: 'Guest saved restaurants retrieved successfully',
+      data: savedRestaurants,
+    };
   }
 }

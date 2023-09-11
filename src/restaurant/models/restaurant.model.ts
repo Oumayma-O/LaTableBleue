@@ -8,12 +8,13 @@ import {
 } from './enums';
 import { Caution } from './caution.model';
 import { Address, AddressSchema } from './address.model';
-import { MenuItem, MenuItemSchema } from './menuItem.model';
 import { SocialLinks, SocialLinksSchema } from './socialLinks.model';
+import { OperatingHours, OperatingHoursSchema } from './operatingHours.model';
+import { Menu } from '../../menu/models/menu.model';
 import {
-  OperatingHoursPerDay,
-  OperatingHoursPerDaySchema,
-} from './operatingHoursPerDay.model';
+  ReservationDetails,
+  ReservationDetailsSchema,
+} from './reservation.details.model';
 
 @Schema()
 export class Restaurant extends Document {
@@ -32,19 +33,19 @@ export class Restaurant extends Document {
   @Prop({ required: true })
   cancellationDeadline: number;
 
-  @Prop({ type: OperatingHoursPerDaySchema }) // Array of operating hours
-  operatingHours: OperatingHoursPerDay[];
+  @Prop({ type: OperatingHoursSchema }) // Array of operating hours
+  operatingHours: OperatingHours;
 
-  @Prop([MenuItemSchema]) // Array of menu items
-  menu: MenuItem[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Menu' }] }) // Array of references to Menu model
+  menus?: Types.ObjectId[];
 
-  @Prop({ type: Types.ObjectId, ref: 'Table' }) // Array of references to Table model
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Table' }] }) // Array of references to Table model
   tables?: Types.ObjectId[];
 
   @Prop({ required: true })
   tableNumber: number;
 
-  @Prop({ type: Types.ObjectId, ref: 'Booking' }) // Array of references to Booking model
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] }) // Array of references to Booking model
   bookingHistory?: Types.ObjectId[];
 
   @Prop({ type: [String], enum: MealType })
@@ -91,6 +92,12 @@ export class Restaurant extends Document {
 
   @Prop({ type: Date }) // Timestamp when rejected
   RejectionTimestamp?: Date;
+
+  @Prop({ type: Date, default: Date.now }) // createdAt field with a default value
+  createdAt: Date;
+
+  @Prop({ type: ReservationDetailsSchema, required: true }) // Define reservationDetails as a subdocument of type ReservationDetails
+  reservationDetails: ReservationDetails;
 
   constructor(partial: Partial<Restaurant>) {
     super(partial);

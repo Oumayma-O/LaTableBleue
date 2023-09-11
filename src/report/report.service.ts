@@ -9,23 +9,18 @@ import { Model } from 'mongoose';
 import { Report } from './models/report.model';
 import { ReviewService } from '../review/review.service';
 import EventEmitter2 from 'eventemitter2';
-import { ReviewDeletedEvent } from '../review/review.events';
 import { Review } from '../review/models/review.model';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ObjectId } from 'mongodb';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class ReportService {
   constructor(
     @InjectModel(Report.name) private readonly reportModel: Model<Report>,
-    @Inject('EventEmitter2') private readonly eventEmitter: EventEmitter2,
-    private readonly reviewService: ReviewService,
-  ) {
-    // Listen for the reviewDeleted event
-    this.eventEmitter.on('reviewDeleted', (event: ReviewDeletedEvent) => {
-      this.handleReviewDeleted(event.deletedReview);
-    });
-  }
+    @Inject('EventEmitter2') private readonly eventEmitter: EventEmitter2, // Inject the EventEmitter2
+    private reviewService: ReviewService,
+  ) {}
 
   async findAll(): Promise<Report[]> {
     return this.reportModel.find().exec();
@@ -62,6 +57,10 @@ export class ReportService {
     // Add the created report to the associated review's reports array
     await this.reviewService.addReportToReview(reviewId, createdReport._id);
 
+    console.log('Emitting reportCreated event...');
+    // Emit the ReportCreatedEvent
+    this.eventEmitter.emit('reportCreated', createdReport);
+
     return createdReport;
   }
 
@@ -84,6 +83,7 @@ export class ReportService {
     return await this.reportModel.findByIdAndDelete(reportId).exec();
   }
 
+  @OnEvent('reviewDeleted')
   async handleReviewDeleted(deletedReview: Review) {
     const reviewId = deletedReview._id;
 

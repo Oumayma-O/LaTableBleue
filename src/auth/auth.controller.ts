@@ -4,7 +4,7 @@ import { UpdatePasswordDto } from './dto/updatePassword.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { CreateUserDto } from '../users/dto/createUser.dto';
-import { BlacklistToken } from '../blacklist/blacklistToken.model';
+import { BlacklistToken } from '../blacklist/models/blacklistToken.model';
 import { Roles } from './decorators/roles.decorator';
 import { Public } from './decorators/public.decorator';
 
@@ -13,7 +13,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Patch('update-password')
-  //@Role(UserRole.ADMIN) // Use the appropriate role here
+  //@Role(UserRole.ADMIN)
   async updatePassword(
     @Req() req,
     @Body() updatePasswordDto: UpdatePasswordDto,
