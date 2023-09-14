@@ -14,7 +14,6 @@ import { ObjectId } from 'mongodb';
 import { EventEmitter2 } from 'eventemitter2';
 import { RestaurantDeletedEvent } from './restaurant.events';
 import { RestaurantStatus } from './models/enums';
-import { OnEvent } from '@nestjs/event-emitter';
 import { CreateOperatingHoursDto } from './dto/createOperatingHours.dto';
 import { OperatingHours } from './models/operatingHours.model';
 import { Booking } from '../booking/models/booking.model';
@@ -46,6 +45,7 @@ export class RestaurantService {
       .findByIdAndDelete(restaurantId)
       .exec();
 
+    console.log(`deleted restaurant : ${deletedRestaurant}`);
     // Emit the restaurantDeleted event
     this.eventEmitter.emit(
       'restaurantDeleted',
@@ -356,7 +356,7 @@ export class RestaurantService {
     }
   }
 
-  private async removeTableFromRestaurant(
+  async removeTableFromRestaurant(
     restaurantId: Types.ObjectId,
     tableId: string,
   ) {
@@ -364,14 +364,6 @@ export class RestaurantService {
       { _id: restaurantId },
       { $pull: { tables: tableId } },
     );
-  }
-
-  @OnEvent('tableDeleted')
-  private async handletableDeleted(deletedTable: Table) {
-    const restaurantId = deletedTable.restaurant; // Assuming this is how the relationship is stored
-    const tableId = deletedTable._id;
-
-    await this.removeTableFromRestaurant(restaurantId, tableId);
   }
 
   // ****** Reviews *******
@@ -423,14 +415,6 @@ export class RestaurantService {
     restaurant.reviews.push(reviewId);
     await restaurant.save();
     await this.updateAverageRating(restaurantId);
-  }
-
-  @OnEvent('reviewDeleted')
-  async handleReviewDeleted(deletedReview: Review) {
-    const restaurantId = deletedReview.restaurant; // Assuming this is how the relationship is stored
-    const reviewId = deletedReview._id;
-    // Remove the review ID from the restaurant's reviews array
-    await this.removeReviewFromRestaurant(restaurantId, reviewId);
   }
 
   async removeReviewFromRestaurant(

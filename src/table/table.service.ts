@@ -1,20 +1,17 @@
 import {
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Table } from './models/table.model';
 import { CreateTableDto } from './dto/createTable.dto';
 import { UpdateTableDto } from './dto/updateTable.dto';
 import { EventEmitter2 } from 'eventemitter2';
-import { Restaurant } from '../restaurant/models/restaurant.model';
 import { TableDeletedEvent } from './table.events';
 import { ObjectId } from 'mongodb';
 import { RestaurantService } from '../restaurant/restaurant.service';
-import { OnEvent } from '@nestjs/event-emitter';
 import { ReservationDetails } from '../restaurant/models/reservation.details.model';
 
 @Injectable()
@@ -24,11 +21,6 @@ export class TableService {
     private eventEmitter: EventEmitter2,
     private restaurantService: RestaurantService,
   ) {}
-
-  handleRestaurantDeleted(deletedRestaurant: Restaurant) {
-    // Delete tables associated with the deleted restaurant
-    this.deleteTablesByRestaurantId(deletedRestaurant._id);
-  }
 
   async deleteTablesByRestaurantId(restaurantId: string): Promise<void> {
     const deletedTables = await this.tableModel
@@ -57,20 +49,15 @@ export class TableService {
     return table;
   }
 
-  @OnEvent('restaurantDeleted')
-  private async removeTableFromRestaurant(
-    restaurantId: Types.ObjectId,
-    tableId: string,
-  ) {
-    await this.tableModel.updateOne(
-      { _id: restaurantId },
-      { $pull: { tables: tableId } },
-    );
-  }
-
-  async createTable(createTableDto: CreateTableDto): Promise<Table> {
+  async createTable(
+    createTableDto: CreateTableDto,
+    restaurantId: ObjectId,
+  ): Promise<Table> {
     try {
-      const createdTable = new this.tableModel(createTableDto);
+      const createdTable = new this.tableModel({
+        ...createTableDto,
+        restaurant: restaurantId,
+      });
       console.log(createdTable);
       return await createdTable.save();
     } catch (error) {
@@ -94,11 +81,17 @@ export class TableService {
     }
   }
 
-  async createManyTables(createTableDtos: CreateTableDto[]): Promise<Table[]> {
+  async createManyTables(
+    createTableDtos: CreateTableDto[],
+    restaurantId: ObjectId,
+  ): Promise<Table[]> {
     const createdTables: Table[] = [];
 
     for (const createTableDto of createTableDtos) {
-      const newTable = new this.tableModel(createTableDto);
+      const newTable = new this.tableModel({
+        ...createTableDto,
+        restaurant: restaurantId,
+      });
       const createdTable = await newTable.save();
       createdTables.push(createdTable);
     }
@@ -128,17 +121,17 @@ export class TableService {
 
   async addTableByRestaurateur(
     restaurateurId: ObjectId,
-    restaurantId: string,
+    restaurantId: ObjectId,
     createTableDto: CreateTableDto,
   ): Promise<Table> {
     const restaurant = await this.restaurantService.getApprovedRestaurant(
-      restaurantId,
+      restaurantId.toString(),
     );
 
     if (restaurant.manager !== restaurateurId) {
       throw new NotFoundException('you are not authorized to add a table');
     }
-    const createdTable = await this.createTable(createTableDto);
+    const createdTable = await this.createTable(createTableDto, restaurantId);
     await this.restaurantService.addTableToRestaurant(
       restaurant._id,
       createdTable._id,
@@ -148,11 +141,11 @@ export class TableService {
 
   async addTablesByRestaurateur(
     restaurateurId: ObjectId,
-    restaurantId: string,
+    restaurantId: ObjectId,
     createTableDtos: CreateTableDto[],
   ): Promise<string> {
     const restaurant = await this.restaurantService.getApprovedRestaurant(
-      restaurantId,
+      restaurantId.toString(),
     );
 
     if (restaurant.manager !== restaurateurId) {
@@ -167,7 +160,10 @@ export class TableService {
     const maxTableNumber = restaurant.tableNumber;
 
     // Add the tables directly
-    const createdTables = await this.createManyTables(createTableDtos);
+    const createdTables = await this.createManyTables(
+      createTableDtos,
+      restaurantId,
+    );
     await this.restaurantService.addTablesToRestaurant(
       restaurant._id,
       createdTables.map((table) => table._id),

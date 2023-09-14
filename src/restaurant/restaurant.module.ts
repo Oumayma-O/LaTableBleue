@@ -4,19 +4,21 @@ import { RestaurantService } from './restaurant.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Restaurant, RestaurantSchema } from './models/restaurant.model';
 import { RestaurantDeletedEvent } from './restaurant.events';
+import { RestaurantEventHandlers } from './restaurant.EventHandler';
 
 @Global()
 @Module({
   controllers: [RestaurantController],
   providers: [
     RestaurantService,
-    RestaurantDeletedEvent, // Provide the event class
+    RestaurantDeletedEvent,
+    RestaurantEventHandlers,
   ],
   imports: [
     MongooseModule.forFeature([
       { name: Restaurant.name, schema: RestaurantSchema },
     ]),
   ],
-  exports: [RestaurantService],
+  exports: [RestaurantService, RestaurantEventHandlers],
 })
 export class RestaurantModule {}

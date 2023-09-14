@@ -16,8 +16,6 @@ import {
   UpdateMenuItemDto,
 } from './dto/update.MenuItem.dto';
 import { EventEmitter2 } from 'eventemitter2';
-import { Restaurant } from '../restaurant/models/restaurant.model';
-import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MenuService {
@@ -27,14 +25,6 @@ export class MenuService {
 
     private readonly restaurantService: RestaurantService,
   ) {}
-
-  @OnEvent('restaurantDeleted')
-  async handleRestaurantDeleted(deletedRestaurant: Restaurant) {
-    const restaurantId = deletedRestaurant._id;
-
-    // Delete bookings associated with the deleted restaurant
-    await this.deleteAllMenusWithRestoId(restaurantId);
-  }
 
   async getMenuById(menuId: ObjectId): Promise<Menu> {
     const menu = await this.menuModel.findById(menuId).exec();
@@ -51,7 +41,10 @@ export class MenuService {
   }
 
   async deleteAllMenusWithRestoId(restaurantId: ObjectId): Promise<void> {
-    await this.menuModel.deleteMany({ restaurantId }).exec();
+    const deleted = await this.menuModel.deleteMany({ restaurantId }).exec();
+    if (deleted.deletedCount === 0) {
+      console.log(`The restaurant has no menus`);
+    }
   }
 
   async createMenu(

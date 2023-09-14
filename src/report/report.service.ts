@@ -9,10 +9,9 @@ import { Model } from 'mongoose';
 import { Report } from './models/report.model';
 import { ReviewService } from '../review/review.service';
 import EventEmitter2 from 'eventemitter2';
-import { Review } from '../review/models/review.model';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ObjectId } from 'mongodb';
-import { OnEvent } from '@nestjs/event-emitter';
+import { ReportCreatedEvent } from './reportCreated.event';
 
 @Injectable()
 export class ReportService {
@@ -59,7 +58,11 @@ export class ReportService {
 
     console.log('Emitting reportCreated event...');
     // Emit the ReportCreatedEvent
-    this.eventEmitter.emit('reportCreated', createdReport);
+
+    this.eventEmitter.emit(
+      'reportCreated',
+      new ReportCreatedEvent(createdReport),
+    );
 
     return createdReport;
   }
@@ -81,14 +84,6 @@ export class ReportService {
 
     // Delete the report
     return await this.reportModel.findByIdAndDelete(reportId).exec();
-  }
-
-  @OnEvent('reviewDeleted')
-  async handleReviewDeleted(deletedReview: Review) {
-    const reviewId = deletedReview._id;
-
-    // Delete reports associated with the deleted review
-    await this.deleteReportsByReviewId(reviewId);
   }
 
   async deleteReportsByReviewId(reviewId: string): Promise<void> {

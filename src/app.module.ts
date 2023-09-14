@@ -46,11 +46,11 @@ import { jwtConfig } from './auth/jwt.config';
   ],
   controllers: [AppController],
   providers: [
-    AppService,
+    AppService /*
     {
       provide: APP_FILTER,
       useClass: DuplicateKeyExceptionFilter,
-    },
+    },*/,
     {
       provide: APP_GUARD,
       useClass: JwtPayloadGuard,

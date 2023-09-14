@@ -16,10 +16,7 @@ import { Rating } from './models/rating.model';
 import { ObjectId } from 'mongodb';
 import { Report } from '../report/models/report.model';
 import EventEmitter2 from 'eventemitter2';
-import { Guest } from '../guest/models/guest.model';
 import { ReviewDeletedEvent } from './review.events';
-import { Restaurant } from '../restaurant/models/restaurant.model';
-import { OnEvent } from '@nestjs/event-emitter';
 import { GuestService } from '../guest/guest.service';
 
 @Injectable()
@@ -46,6 +43,7 @@ export class ReviewService {
   }
 
   async findReviewsByRestaurantId(restaurantId: string): Promise<Review[]> {
+    console.log(`restaurantId : ${restaurantId}`);
     const reviews = await this.reviewModel
       .find({ restaurant: restaurantId, hidden: false })
       .exec();
@@ -59,29 +57,11 @@ export class ReviewService {
     return reviews;
   }
 
-  @OnEvent('guestDeleted')
-  async handleGuestDeleted(deletedGuest: Guest) {
-    // Get reviews associated with the deleted guest
-    const reviewsToDelete = await this.findReviewsByGuestId(deletedGuest._id);
-
-    // Delete each review and its associated reports
-    for (const review of reviewsToDelete) {
-      await this.deleteReviewAndAssociatedReports(review._id);
-    }
-  }
-
-  @OnEvent('restaurantDeleted')
-  async handleRestaurantDeleted(deletedRestaurant: Restaurant) {
-    const restaurantId = deletedRestaurant._id;
-
-    // Delete reviews associated with the deleted restaurant
-    await this.deleteReviewsByRestaurantId(restaurantId);
-  }
-
   async deleteReviewsByRestaurantId(restaurantId: string): Promise<void> {
     // Get reviews associated with the user
     const reviewsToDelete = await this.findReviewsByRestaurantId(restaurantId);
 
+    console.log(`reviews ${reviewsToDelete}`);
     // Delete each review and its associated reports
     for (const review of reviewsToDelete) {
       await this.deleteReviewAndAssociatedReports(review._id);
@@ -96,6 +76,7 @@ export class ReviewService {
     if (!deletedReview) {
       throw new NotFoundException('Review not found');
     }
+    console.log(`delete review event emit`);
     // Emit the reviewDeleted event
     this.eventEmitter.emit(
       'reviewDeleted',
@@ -249,28 +230,6 @@ export class ReviewService {
     const review = await this.findReviewById(reviewId);
     review.hidden = true;
     await review.save();
-  }
-
-  @OnEvent('reportCreated')
-  async handleReportCreated(report: Report) {
-    try {
-      console.log('handling reportCreated event...');
-
-      // Retrieve the associated review based on the report data
-      const review = await this.findReviewById(report.review.toString());
-
-      // Convert process.env.HIDE_THRESHOLD to a number
-      const hideThreshold = 5;
-
-      // Check if the report count has reached the HIDE_THRESHOLD
-      if (review.reportCount >= hideThreshold) {
-        // Hide the review if the threshold is reached
-        await this.hideReview(review._id);
-      }
-    } catch (error) {
-      // Handle any errors that occur during the process
-      console.error(`Error handling 'reportCreated' event: ${error.message}`);
-    }
   }
 
   async getHiddenReviews(): Promise<Review[]> {

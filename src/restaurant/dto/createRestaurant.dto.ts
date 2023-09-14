@@ -44,6 +44,7 @@ export class CreateRestaurantDto {
   @IsDate()
   foundationDate: Date;
 
+  @ValidateNested()
   @Type(() => CreateOperatingHoursDto)
   operatingHours: CreateOperatingHoursDto;
 

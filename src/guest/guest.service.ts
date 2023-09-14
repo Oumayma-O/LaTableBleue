@@ -21,7 +21,6 @@ import { ObjectId } from 'mongodb';
 import { Review } from '../review/models/review.model';
 import { EventEmitter2 } from 'eventemitter2';
 import { GuestDeletedEvent } from './guest.events';
-import { OnEvent } from '@nestjs/event-emitter';
 import { Restaurant } from '../restaurant/models/restaurant.model';
 import { RestaurantService } from '../restaurant/restaurant.service';
 
@@ -147,15 +146,6 @@ export class GuestService {
 
     guest.reviews.push(reviewId);
     await guest.save();
-  }
-
-  @OnEvent('reviewDeleted')
-  async handleReviewDeleted(deletedReview: Review) {
-    const guestId = deletedReview.guest; // Assuming this is how the relationship is stored
-    const reviewId = deletedReview._id.toString();
-
-    // Remove the review ID from the guest's reviews array
-    await this.removeReviewFromGuest(guestId, reviewId);
   }
 
   async removeReviewFromGuest(

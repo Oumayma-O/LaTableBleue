@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Review, ReviewSchema } from './models/review.model';
 import { EventEmitter2 } from 'eventemitter2';
 import { ReviewDeletedEvent } from './review.events';
+import { ReviewEventHandlersService } from './review.EventHandler';
 
 @Global()
 @Module({
@@ -12,14 +13,15 @@ import { ReviewDeletedEvent } from './review.events';
   providers: [
     ReviewService,
     {
-      provide: 'EventEmitter2', // Provide the EventEmitter2 token
-      useValue: new EventEmitter2(), // Create a new instance of EventEmitter2
+      provide: 'EventEmitter2',
+      useValue: new EventEmitter2(),
     },
-    ReviewDeletedEvent, // Provide the event class
+    ReviewDeletedEvent,
+    ReviewEventHandlersService,
   ],
   imports: [
     MongooseModule.forFeature([{ name: Review.name, schema: ReviewSchema }]),
   ],
-  exports: [ReviewService],
+  exports: [ReviewService, ReviewEventHandlersService],
 })
 export class ReviewModule {}

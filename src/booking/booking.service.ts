@@ -7,9 +7,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Booking } from './models/booking.model';
-import { Guest } from '../guest/models/guest.model';
-import { Restaurant } from '../restaurant/models/restaurant.model';
-import { OnEvent } from '@nestjs/event-emitter';
 import { CreateBookingDto } from './dto/createBooking.dto';
 import { RestaurantService } from '../restaurant/restaurant.service';
 import { GuestService } from '../guest/guest.service';
@@ -17,6 +14,7 @@ import { Table } from '../table/models/table.model';
 import { ObjectId } from 'mongodb';
 import { TableService } from '../table/table.service';
 import { BookingState } from './models/enums';
+
 
 @Injectable()
 export class BookingService {
@@ -28,24 +26,15 @@ export class BookingService {
     private tableService: TableService,
   ) {}
 
-  @OnEvent('guestDeleted')
-  async handleGuestDeleted(deletedGuest: Guest) {
+  async deleteBookingsByGuestId(guestId: string): Promise<void> {
     // Delete bookings associated with the deleted guest
     const deletedBookings = await this.bookingModel
-      .deleteMany({ guest: deletedGuest._id })
+      .deleteMany({ guest: guestId })
       .exec();
 
     if (!deletedBookings.deletedCount) {
       console.log(`No bookings found for the deleted guest`);
     }
-  }
-
-  @OnEvent('restaurantDeleted')
-  async handleRestaurantDeleted(deletedRestaurant: Restaurant) {
-    const restaurantId = deletedRestaurant._id;
-
-    // Delete bookings associated with the deleted restaurant
-    await this.deleteBookingsByRestaurantId(restaurantId);
   }
 
   async deleteBookingsByRestaurantId(restaurantId: string): Promise<void> {

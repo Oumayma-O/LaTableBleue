@@ -1,4 +1,4 @@
-import { IsNumber, IsEnum, IsNotEmpty, IsMongoId } from 'class-validator';
+import { IsNumber, IsEnum, IsNotEmpty } from 'class-validator';
 import { TableDescription } from '../models/table.model';
 
 export class CreateTableDto {
@@ -13,8 +13,4 @@ export class CreateTableDto {
   @IsEnum(TableDescription)
   @IsNotEmpty()
   description: TableDescription;
-
-  @IsMongoId() // Ensure it's a valid MongoDB ObjectId
-  @IsNotEmpty()
-  restaurant: string;
 }
