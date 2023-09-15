@@ -79,18 +79,5 @@ export class TableController {
     return this.tableService.deleteTableByRestaurateur(restaurateurId, tableId);
   }
 
-  @Public()
-  @Get('availability/:restaurantId')
-  async checkAvailability(
-    @Param('restaurantId') restaurantId: string,
-    @Query('partySize') partySize: number,
-    @Query('dateTime') dateTime: Date,
-  ): Promise<Table[]> {
-    const availableTables = await this.tableService.checkAvailability(
-      restaurantId,
-      partySize,
-      new Date(dateTime),
-    );
-    return availableTables;
-  }
+
 }

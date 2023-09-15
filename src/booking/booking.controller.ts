@@ -14,6 +14,8 @@ import { CreateBookingDto } from './dto/createBooking.dto';
 import { Booking } from './models/booking.model';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/UserRole.enum';
+import { Public } from '../auth/decorators/public.decorator';
+import { Table } from '../table/models/table.model';
 
 @Controller('bookings')
 export class BookingController {
@@ -102,5 +104,20 @@ export class BookingController {
     }
 
     return this.bookingService.getAllBookingsByDate(parsedDate);
+  }
+
+  @Public()
+  @Get('availability/:restaurantId')
+  async checkAvailability(
+    @Param('restaurantId') restaurantId: string,
+    @Query('partySize') partySize: number,
+    @Query('dateTime') dateTime: Date,
+  ): Promise<Table[]> {
+    const availableTables = await this.bookingService.checkAvailability(
+      restaurantId,
+      partySize,
+      new Date(dateTime),
+    );
+    return availableTables;
   }
 }

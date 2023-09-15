@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { CreateOperatingHoursDto } from '../dto/createOperatingHours.dto';
 
 export enum DayOfWeek {
   MONDAY = 'Monday',
@@ -22,14 +23,13 @@ export class Interval {
     Object.assign(this, partial);
   }
 }
-export const IntervalSchema = SchemaFactory.createForClass(Interval);
 
 @Schema()
 export class OperatingHoursPerDay {
   @Prop({ required: true, enum: DayOfWeek })
   day: string;
 
-  @Prop({ type: [IntervalSchema], required: true })
+  @Prop({ type: [Interval], required: true })
   intervals: Interval[];
 
   constructor(partial: Partial<OperatingHoursPerDay>) {
@@ -37,14 +37,11 @@ export class OperatingHoursPerDay {
   }
 }
 
-export const OperatingHoursPerDaySchema =
-  SchemaFactory.createForClass(OperatingHoursPerDay);
-
 export class OperatingHours {
-  @Prop({ type: [OperatingHoursPerDaySchema], required: true })
+  @Prop({ type: [OperatingHoursPerDay], required: true })
   days: OperatingHoursPerDay[];
 
-  constructor(partial: Partial<OperatingHours>) {
+  constructor(partial: CreateOperatingHoursDto) {
     Object.assign(this, partial);
   }
 }

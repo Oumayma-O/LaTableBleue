@@ -14,7 +14,7 @@ import { Table } from '../table/models/table.model';
 import { ObjectId } from 'mongodb';
 import { TableService } from '../table/table.service';
 import { BookingState } from './models/enums';
-
+import { ReservationDetails } from '../restaurant/models/reservation.details.model';
 
 @Injectable()
 export class BookingService {
@@ -52,77 +52,73 @@ export class BookingService {
     restaurantId: string,
     userId: string,
   ): Promise<Booking> {
-    // Find the restaurant
-    const restaurant = await this.restaurantService.getApprovedRestaurant(
-      restaurantId,
-    );
-
-    // Find the user (guest)
-    const user = await this.guestService.getGuestById(userId);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    // Check table availability and get available tables
-    const availableTables: Table[] = await this.tableService.checkAvailability(
-      restaurantId,
-      createBookingDto.partySize,
-      createBookingDto.dateTime,
-    );
-
-    // Check if the requested tables are available
-    const requestedTableIds = createBookingDto.bookedTables;
-    const areRequestedTablesAvailable = this.areRequestedTablesAvailable(
-      requestedTableIds,
-      availableTables,
-    );
-
-    if (!areRequestedTablesAvailable) {
-      throw new ConflictException('Requested tables are not available');
-    }
-
-    // Create a new booking instance
-    const booking = new this.bookingModel({
-      guest: userId,
-      restaurant: restaurantId,
-      dateTime: createBookingDto.dateTime,
-      partySize: createBookingDto.partySize,
-      bookedTables: createBookingDto.bookedTables,
-      specialRequest: createBookingDto.specialRequest,
-    });
-
-    // Calculate booking details and update the booking
-    await this.restaurantService.calculateBookingDetails(booking);
-
-    // Save the booking
-    await booking.save();
-
-    // Add the booking to guest, restaurant, and tables
-    await this.guestService.addBookingToGuest(user, booking._id);
-    await this.restaurantService.addBookingToRestaurant(
-      restaurant,
-      booking._id,
-    );
-    await this.tableService.addBookingToTables(availableTables, booking._id);
-
-    return booking;
-  }
-
-  areRequestedTablesAvailable(
-    requestedTableIds: ObjectId[],
-    availableTables: Table[],
-  ): boolean {
-    for (const tableId of requestedTableIds) {
-      const isTableAvailable = availableTables.some(
-        (table) => table._id === tableId,
+    try {
+      // Find the restaurant
+      const restaurant = await this.restaurantService.getApprovedRestaurant(
+        restaurantId,
       );
 
-      if (!isTableAvailable) {
-        return false; // At least one requested table is not available
+      // Find the user (guest)
+      const user = await this.guestService.getGuestById(userId);
+      if (!user) {
+        throw new NotFoundException('User not found');
       }
-    }
+      const dateTime = new Date(createBookingDto.dateTime);
 
-    return true; // All requested tables are available
+
+      // Check table availability and get available tables
+      for (const tableId of createBookingDto.bookedTables) {
+        if (
+          !(await this.isTableAvailable(
+            restaurantId,
+            tableId.toString(),
+            dateTime,
+          ))
+        ) {
+          throw new ConflictException('The selected table is not available');
+        }
+      }
+
+      // Calculate booking details
+      const { cautionAmount, paymentDeadline, cancellationDeadline } =
+        await this.restaurantService.calculateBookingDetails(
+          restaurantId,
+          dateTime,
+          createBookingDto.partySize,
+        );
+
+      // Create a new booking instance
+      const booking = new this.bookingModel({
+        guest: userId,
+        restaurant: restaurantId,
+        dateTime: dateTime,
+        partySize: createBookingDto.partySize,
+        bookedTables: createBookingDto.bookedTables,
+        specialRequest: createBookingDto.specialRequest,
+        cautionAmount: Number(cautionAmount.toFixed(2)),
+        cancellationDeadline: cancellationDeadline,
+        paymentDelay: paymentDeadline,
+      });
+
+      // Save the booking
+      await booking.save();
+
+      // Add the booking to guest, restaurant, and tables
+      await this.guestService.addBookingToGuest(user, booking._id);
+      await this.restaurantService.addBookingToRestaurant(
+        restaurant,
+        booking._id,
+      );
+      await this.tableService.addBookingToTables(
+        createBookingDto.bookedTables,
+        booking._id,
+      );
+
+      return booking;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async getGuestBookings(guestId: string): Promise<Booking[]> {
@@ -223,5 +219,132 @@ export class BookingService {
         },
       })
       .exec();
+  }
+
+  async checkAvailability(
+    restaurantId: string,
+    partySize: number,
+    dateTime: Date,
+  ): Promise<Table[]> {
+    try {
+
+      const restaurant = await this.restaurantService.getApprovedRestaurant(
+        restaurantId,
+      );
+
+
+      const tables = await this.restaurantService.findRestaurantTables(
+        restaurantId,
+      );
+
+      const availableTables = [];
+
+      for (const table of tables) {
+        const isAvailable = await this.isTableAvailable(
+          restaurantId,
+          table._id,
+          dateTime,
+        );
+
+        if (isAvailable && table.capacity >= partySize) {
+          availableTables.push(table);
+        }
+      }
+
+      return availableTables;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async isTableAvailable(
+    restaurantId:string,
+    tableId: string,
+    dateTime: Date,
+  ): Promise<boolean> {
+    // Get the current date and time
+    const currentDateTime = new Date();
+
+    // Check if dateTime is in the past
+    if (dateTime < currentDateTime) {
+      throw new ConflictException(`the dateTime is not valid`);
+    }
+
+    const restaurant = await this.restaurantService.getApprovedRestaurant(
+      restaurantId,
+    );
+
+    const reservationDetails: ReservationDetails =
+      restaurant.reservationDetails;
+
+    const reservationDuration = reservationDetails.reservationDuration;
+    const preparationTime = reservationDetails.preparationTime;
+    const bookingBufferTime = reservationDetails.bookingBufferTime;
+
+    const requestedStartTime = new Date(dateTime);
+    requestedStartTime.setMinutes(
+      requestedStartTime.getMinutes() - (preparationTime + bookingBufferTime),
+    );
+
+    const requestedEndTime = new Date(requestedStartTime);
+    requestedEndTime.setMinutes(
+      requestedEndTime.getMinutes() + reservationDuration,
+    );
+
+    const operatingHours = restaurant.operatingHours.days.find(
+      (day) =>
+        day.day === dateTime.toLocaleDateString('en-US', { weekday: 'long' }),
+    );
+
+    if (!operatingHours) {
+      throw new NotFoundException('Restaurant is closed on that day');
+    }
+
+    const openingTime = new Date(dateTime);
+    openingTime.setHours(
+      parseInt(operatingHours.intervals[0].openingTime.split(':')[0]),
+      parseInt(operatingHours.intervals[0].openingTime.split(':')[1]),
+    );
+
+    const closingTime = new Date(dateTime);
+    closingTime.setHours(
+      parseInt(operatingHours.intervals[0].closingTime.split(':')[0]),
+      parseInt(operatingHours.intervals[0].closingTime.split(':')[1]),
+    );
+
+    if (
+      requestedEndTime <= openingTime ||
+      requestedStartTime >= closingTime ||
+      requestedEndTime >= closingTime ||
+      requestedStartTime <= openingTime ||
+      closingTime.getTime() - dateTime.getTime() <
+      reservationDuration * 60 * 1000
+    ) {
+      throw new ConflictException('reservation not possible ');
+    }
+
+    console.log(requestedStartTime);
+    console.log(requestedEndTime);
+
+    const tableBookings = await this.bookingModel
+      .find({
+        bookedTables: tableId,
+        dateTime: {
+          $gte: requestedStartTime,
+          $lt: requestedEndTime,
+        },
+        bookingState: {
+          $in: ['pending', 'approved'],
+        },
+      })
+      .exec();
+
+    if (!tableBookings || tableBookings.length === 0) {
+      // No bookings for this table during the specified time, it's available
+      return true;
+    } else {
+      return false;
+    }
   }
 }

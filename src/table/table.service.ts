@@ -213,93 +213,12 @@ export class TableService {
     }
     return await this.deleteTable(tableId);
   }
-
-  async checkAvailability(
-    restaurantId: string,
-    partySize: number,
-    dateTime: Date,
-  ): Promise<Table[]> {
-    // Get the current date and time
-    const currentDateTime = new Date();
-
-    // Check if dateTime is in the past
-    if (dateTime < currentDateTime) {
-      throw new ConflictException(`the dateTime is not valid`);
-    }
-
-    const restaurant = await this.restaurantService.getApprovedRestaurant(
-      restaurantId,
-    );
-
-    const reservationDetails: ReservationDetails =
-      restaurant.reservationDetails;
-
-    const reservationDuration = reservationDetails.reservationDuration;
-    const preparationTime = reservationDetails.preparationTime;
-    const bookingBufferTime = reservationDetails.bookingBufferTime;
-
-    const requestedStartTime = new Date(dateTime);
-    requestedStartTime.setMinutes(
-      requestedStartTime.getMinutes() - (preparationTime + bookingBufferTime),
-    );
-
-    const requestedEndTime = new Date(requestedStartTime);
-    requestedEndTime.setMinutes(
-      requestedEndTime.getMinutes() + reservationDuration,
-    );
-
-    const operatingHours = restaurant.operatingHours.days.find(
-      (day) =>
-        day.day === dateTime.toLocaleDateString('en-US', { weekday: 'long' }),
-    );
-
-    if (!operatingHours) {
-      throw new NotFoundException('Restaurant is closed on that day');
-    }
-
-    const openingTime = new Date(dateTime);
-    openingTime.setHours(
-      parseInt(operatingHours.intervals[0].openingTime.split(':')[0]),
-      parseInt(operatingHours.intervals[0].openingTime.split(':')[1]),
-    );
-
-    const closingTime = new Date(dateTime);
-    closingTime.setHours(
-      parseInt(operatingHours.intervals[0].closingTime.split(':')[0]),
-      parseInt(operatingHours.intervals[0].closingTime.split(':')[1]),
-    );
-
-    if (
-      requestedEndTime <= openingTime ||
-      requestedStartTime >= closingTime ||
-      closingTime.getTime() - dateTime.getTime() <
-        reservationDuration * 60 * 1000
-    ) {
-      throw new ConflictException('reservation not possible ');
-    }
-
-    const availableTables = await this.tableModel.find({
-      restaurant: restaurantId,
-      bookings: {
-        $not: {
-          $elemMatch: {
-            dateTime: {
-              $lte: requestedEndTime,
-              $gte: requestedStartTime,
-            },
-          },
-        },
-      },
-      capacity: { $gte: partySize },
-    });
-
-    return availableTables;
-  }
-
-  async addBookingToTables(tables: Table[], booking: ObjectId) {
-    for (const table of tables) {
-      table.bookings.push(booking);
-      await table.save();
+  async addBookingToTables(tableIds: ObjectId[], booking: ObjectId) {
+    for (const tableId of tableIds) {
+      await this.tableModel.updateOne(
+        { _id: tableId },
+        { $push: { bookings: booking } },
+      );
     }
   }
 }

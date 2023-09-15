@@ -20,6 +20,7 @@ import { Table } from '../table/models/table.model';
 import { Review } from '../review/models/review.model';
 import { ObjectId } from 'mongodb';
 import { ParseObjectIdPipe } from '../Pipes/parse-object-id.pipe';
+import { CreateOperatingHoursDto } from './dto/createOperatingHours.dto';
 
 @Controller('restaurant')
 export class RestaurantController {
@@ -238,5 +239,25 @@ export class RestaurantController {
     @Param('restaurantId', ParseObjectIdPipe) restaurantId: ObjectId,
   ): Promise<Review[]> {
     return this.restaurantService.getReviewsForRestaurant(restaurantId);
+  }
+
+  @Post('OperatingHours/:restaurantId')
+  @Roles(UserRole.RESTAURATEUR)
+  async addOperatingHours(
+    @Req() req,
+    @Param('restaurantId') restaurantId: string,
+    @Body() createOperatingHoursDto: CreateOperatingHoursDto,
+  ) {
+    // Replace 'authUserId' with the actual method to get the authenticated user's ID
+    const authUserId = req.jwtPayload.sub;
+    console.log(restaurantId);
+
+    const updatedRestaurant = await this.restaurantService.addOperatingHours(
+      authUserId,
+      restaurantId,
+      createOperatingHoursDto,
+    );
+
+    return updatedRestaurant;
   }
 }

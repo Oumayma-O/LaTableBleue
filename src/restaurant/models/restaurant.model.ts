@@ -9,7 +9,7 @@ import {
 import { Caution } from './caution.model';
 import { Address, AddressSchema } from './address.model';
 import { SocialLinks, SocialLinksSchema } from './socialLinks.model';
-import { OperatingHours, OperatingHoursSchema } from './operatingHours.model';
+import { OperatingHours, OperatingHoursPerDay } from "./operatingHours.model";
 import { Menu } from '../../menu/models/menu.model';
 import {
   ReservationDetails,
@@ -33,7 +33,7 @@ export class Restaurant extends Document {
   @Prop({ required: true })
   cancellationDeadline: number;
 
-  @Prop({ type: OperatingHoursSchema }) // Array of operating hours
+  @Prop({ type: OperatingHours }) // Array of operating hours
   operatingHours: OperatingHours;
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Menu' }] }) // Array of references to Menu model

@@ -14,9 +14,9 @@ import { ObjectId } from 'mongodb';
 import { EventEmitter2 } from 'eventemitter2';
 import { RestaurantDeletedEvent } from './restaurant.events';
 import { RestaurantStatus } from './models/enums';
-import { CreateOperatingHoursDto } from './dto/createOperatingHours.dto';
-import { OperatingHours } from './models/operatingHours.model';
 import { Booking } from '../booking/models/booking.model';
+import { OperatingHours } from "./models/operatingHours.model";
+import { CreateOperatingHoursDto } from "./dto/createOperatingHours.dto";
 
 @Injectable()
 export class RestaurantService {
@@ -154,26 +154,32 @@ export class RestaurantService {
     restaurantId: string,
     createOperatingHoursDto: CreateOperatingHoursDto,
   ) {
-    // Find the restaurant by ID
-    const restaurant = await this.getApprovedRestaurant(restaurantId);
-    if (restaurateurId !== restaurant.manager) {
-      throw new UnauthorizedException(
-        `You are not authorized to add operating hours to this restaurant`,
-      );
+    try {
+      // Find the restaurant by ID
+      const restaurant = await this.getApprovedRestaurant(restaurantId);
+      if (restaurateurId !== restaurant.manager) {
+        throw new UnauthorizedException(
+          `You are not authorized to add operating hours to this restaurant`,
+        );
+      }
+
+      // Create an instance of OperatingHours and assign it
+      const operatingHours = new OperatingHours(createOperatingHoursDto);
+
+      // Assign the operatingHours to the restaurant's property
+      restaurant.operatingHours = operatingHours;
+
+      // Save the updated restaurant document
+      await restaurant.save();
+
+      // Return the updated restaurant document
+      return restaurant;
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-
-    // Create an instance of OperatingHours and assign it
-    const operatingHours = new OperatingHours({ ...createOperatingHoursDto });
-
-    // Assign the operatingHours to the restaurant's property
-    restaurant.operatingHours = operatingHours;
-
-    // Save the updated restaurant document
-    await restaurant.save();
-
-    // Return the updated restaurant document
-    return restaurant;
   }
+
   // ********************
 
   async findRestaurantById(restaurantId: any): Promise<Restaurant> {
@@ -434,51 +440,61 @@ export class RestaurantService {
 
   // ****** Bookings *******
 
-  async calculateBookingDetails(booking: Booking): Promise<void> {
-    // Find the restaurant associated with the booking
-    const restaurant = await this.getApprovedRestaurant(
-      booking.restaurant.toString(),
-    );
+  async calculateBookingDetails(
+    restaurantId: string,
+    dateTime: Date,
+    partySize: number,
+  ): Promise<{
+    cautionAmount: number;
+    paymentDeadline: Date;
+    cancellationDeadline: Date;
+  }> {
+    try {
+      // Find the restaurant associated with the booking
+      const restaurant = await this.getApprovedRestaurant(restaurantId);
 
-    // Find the caution details for the restaurant
-    const cautionDetails = restaurant.caution;
+      // Find the caution details for the restaurant
+      const cautionDetails = restaurant.caution;
 
-    // Calculate caution amount based on restaurant's caution details
-    let cautionAmount = cautionDetails.fixedAmount;
+      // Calculate caution amount based on restaurant's caution details
+      let cautionAmount = cautionDetails.fixedAmount;
 
-    // Check if it's a weekend booking and apply the multiplier
-    const bookingDay = booking.dateTime.getDay(); // 0 for Sunday, 1 for Monday, etc.
-    if (bookingDay === 5 || bookingDay === 6) {
-      cautionAmount *= cautionDetails.weekendMultiplier;
+      // Check if it's a weekend booking and apply the multiplier
+      const bookingDay = dateTime.getDay(); // 0 for Sunday, 1 for Monday, etc.
+      if (bookingDay === 5 || bookingDay === 6) {
+        cautionAmount *= cautionDetails.weekendMultiplier;
+      }
+
+      // Check if it's a special occasion booking and apply the multiplier
+      // Replace this condition with your logic for detecting special occasions
+      const isSpecialOccasion = false; // Replace with your logic
+      if (isSpecialOccasion) {
+        cautionAmount *= cautionDetails.specialOccasionMultiplier;
+      }
+
+      // Apply the party size multiplier
+      cautionAmount *= cautionDetails.partySizeMultiplier * partySize;
+
+      // Calculate payment deadline and set it in the booking
+      const paymentDelayHours = cautionDetails.paymentDelay;
+      const paymentDeadline = new Date(dateTime);
+      paymentDeadline.setHours(paymentDeadline.getHours() + paymentDelayHours);
+
+      // Calculate cancellation deadline and set it in the booking
+      const cancellationDeadline = new Date(dateTime);
+      cancellationDeadline.setHours(
+        cancellationDeadline.getHours() + restaurant.cancellationDeadline,
+      );
+
+      return {
+        cautionAmount,
+        paymentDeadline,
+        cancellationDeadline,
+      };
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-
-    // Check if it's a special occasion booking and apply the multiplier
-    // Replace this condition with your logic for detecting special occasions
-    const isSpecialOccasion = false; // Replace with your logic
-    if (isSpecialOccasion) {
-      cautionAmount *= cautionDetails.specialOccasionMultiplier;
-    }
-
-    // Apply the party size multiplier
-    cautionAmount *= cautionDetails.partySizeMultiplier * booking.partySize;
-
-    // Set the calculated caution amount in the booking
-    booking.cautionAmount = cautionAmount;
-
-    // Calculate payment deadline and set it in the booking
-    const paymentDelayHours = cautionDetails.paymentDelay;
-    const paymentDeadline = new Date(booking.dateTime);
-    paymentDeadline.setHours(paymentDeadline.getHours() + paymentDelayHours);
-    booking.paymentDelay = paymentDeadline;
-
-    // Calculate cancellation deadline and set it in the booking
-    const cancellationDeadline = new Date(booking.dateTime);
-    cancellationDeadline.setHours(
-      cancellationDeadline.getHours() + restaurant.cancellationDeadline,
-    );
-    booking.cancellationDeadline = cancellationDeadline;
-
-    await booking.save();
   }
 
   async addBookingToRestaurant(restaurant: Restaurant, booking: ObjectId) {
