@@ -65,7 +65,6 @@ export class BookingService {
       }
       const dateTime = new Date(createBookingDto.dateTime);
 
-
       // Check table availability and get available tables
       for (const tableId of createBookingDto.bookedTables) {
         if (
@@ -79,14 +78,6 @@ export class BookingService {
         }
       }
 
-      // Calculate booking details
-      const { cautionAmount, paymentDeadline, cancellationDeadline } =
-        await this.restaurantService.calculateBookingDetails(
-          restaurantId,
-          dateTime,
-          createBookingDto.partySize,
-        );
-
       // Create a new booking instance
       const booking = new this.bookingModel({
         guest: userId,
@@ -95,9 +86,6 @@ export class BookingService {
         partySize: createBookingDto.partySize,
         bookedTables: createBookingDto.bookedTables,
         specialRequest: createBookingDto.specialRequest,
-        cautionAmount: Number(cautionAmount.toFixed(2)),
-        cancellationDeadline: cancellationDeadline,
-        paymentDelay: paymentDeadline,
       });
 
       // Save the booking
@@ -167,7 +155,8 @@ export class BookingService {
       timestamp: new Date(),
     });
 
-    return booking.save();
+    await this.restaurantService.calculateBookingDetails(booking);
+    return booking;
   }
 
   async disapproveBooking(
@@ -227,11 +216,9 @@ export class BookingService {
     dateTime: Date,
   ): Promise<Table[]> {
     try {
-
       const restaurant = await this.restaurantService.getApprovedRestaurant(
         restaurantId,
       );
-
 
       const tables = await this.restaurantService.findRestaurantTables(
         restaurantId,
@@ -259,7 +246,7 @@ export class BookingService {
   }
 
   async isTableAvailable(
-    restaurantId:string,
+    restaurantId: string,
     tableId: string,
     dateTime: Date,
   ): Promise<boolean> {
@@ -319,7 +306,7 @@ export class BookingService {
       requestedEndTime >= closingTime ||
       requestedStartTime <= openingTime ||
       closingTime.getTime() - dateTime.getTime() <
-      reservationDuration * 60 * 1000
+        reservationDuration * 60 * 1000
     ) {
       throw new ConflictException('reservation not possible ');
     }
@@ -345,6 +332,28 @@ export class BookingService {
       return true;
     } else {
       return false;
+    }
+  }
+  async checkPaymentDeadlines() {
+    try {
+      const currentDate = new Date();
+
+      // Find bookings that are pending and have exceeded the payment deadline
+      const overdueBookings = await this.bookingModel.find({
+        bookingState: BookingState.APPROVED,
+        paymentDelay: { $lte: currentDate },
+        cautionPayed: false,
+      });
+
+      // Update the state of overdue bookings to "cancelled"
+      for (const booking of overdueBookings) {
+        booking.bookingState = BookingState.CANCELLED;
+        await booking.save();
+      }
+
+      console.log(`Updated ${overdueBookings.length} bookings to CANCELLED.`);
+    } catch (error) {
+      console.error('Error updating booking states:', error);
     }
   }
 }

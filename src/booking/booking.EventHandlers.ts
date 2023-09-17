@@ -3,7 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { GuestDeletedEvent } from '../guest/guest.events';
 import { RestaurantDeletedEvent } from '../restaurant/restaurant.events';
 import { BookingService } from './booking.service';
-import { ReportCreatedEvent } from "../report/reportCreated.event";
+import { ReportCreatedEvent } from '../report/reportCreated.event';
 
 @Injectable()
 export class BookingEventHandlers {

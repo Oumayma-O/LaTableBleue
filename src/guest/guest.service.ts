@@ -185,10 +185,12 @@ export class GuestService {
     if (!guest) {
       throw new NotFoundException(`Guest with id ${guestId} not found`);
     }
-
+    const resto = await this.restaurantService.getApprovedRestaurant(
+      restaurantId.toString(),
+    );
     // Check if the restaurant is already in the saved list
-    if (!guest.savedRestaurants.includes(restaurantId)) {
-      guest.savedRestaurants.push(restaurantId);
+    if (!guest.savedRestaurants.includes(resto._id)) {
+      guest.savedRestaurants.push(resto._id);
       await guest.save();
     }
 

@@ -15,8 +15,8 @@ import { EventEmitter2 } from 'eventemitter2';
 import { RestaurantDeletedEvent } from './restaurant.events';
 import { RestaurantStatus } from './models/enums';
 import { Booking } from '../booking/models/booking.model';
-import { OperatingHours } from "./models/operatingHours.model";
-import { CreateOperatingHoursDto } from "./dto/createOperatingHours.dto";
+import { OperatingHours } from './models/operatingHours.model';
+import { CreateOperatingHoursDto } from './dto/createOperatingHours.dto';
 
 @Injectable()
 export class RestaurantService {
@@ -440,18 +440,12 @@ export class RestaurantService {
 
   // ****** Bookings *******
 
-  async calculateBookingDetails(
-    restaurantId: string,
-    dateTime: Date,
-    partySize: number,
-  ): Promise<{
-    cautionAmount: number;
-    paymentDeadline: Date;
-    cancellationDeadline: Date;
-  }> {
+  async calculateBookingDetails(booking: Booking): Promise<void> {
     try {
       // Find the restaurant associated with the booking
-      const restaurant = await this.getApprovedRestaurant(restaurantId);
+      const restaurant = await this.getApprovedRestaurant(
+        booking.restaurant.toString(),
+      );
 
       // Find the caution details for the restaurant
       const cautionDetails = restaurant.caution;
@@ -460,7 +454,7 @@ export class RestaurantService {
       let cautionAmount = cautionDetails.fixedAmount;
 
       // Check if it's a weekend booking and apply the multiplier
-      const bookingDay = dateTime.getDay(); // 0 for Sunday, 1 for Monday, etc.
+      const bookingDay = booking.dateTime.getDay(); // 0 for Sunday, 1 for Monday, etc.
       if (bookingDay === 5 || bookingDay === 6) {
         cautionAmount *= cautionDetails.weekendMultiplier;
       }
@@ -473,24 +467,23 @@ export class RestaurantService {
       }
 
       // Apply the party size multiplier
-      cautionAmount *= cautionDetails.partySizeMultiplier * partySize;
+      cautionAmount *= cautionDetails.partySizeMultiplier * booking.partySize;
+      booking.cautionAmount = cautionAmount;
 
       // Calculate payment deadline and set it in the booking
       const paymentDelayHours = cautionDetails.paymentDelay;
-      const paymentDeadline = new Date(dateTime);
+      const paymentDeadline = new Date(booking.dateTime);
       paymentDeadline.setHours(paymentDeadline.getHours() + paymentDelayHours);
+      booking.paymentDelay = paymentDeadline;
 
       // Calculate cancellation deadline and set it in the booking
-      const cancellationDeadline = new Date(dateTime);
+      const cancellationDeadline = new Date(booking.dateTime);
       cancellationDeadline.setHours(
         cancellationDeadline.getHours() + restaurant.cancellationDeadline,
       );
+      booking.cancellationDeadline = cancellationDeadline;
 
-      return {
-        cautionAmount,
-        paymentDeadline,
-        cancellationDeadline,
-      };
+      booking.save();
     } catch (error) {
       console.log(error);
       throw error;

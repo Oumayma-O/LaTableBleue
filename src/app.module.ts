@@ -15,23 +15,20 @@ import { JwtPayloadGuard } from './auth/guards/jwtPayload.guard';
 import { JwtModule } from '@nestjs/jwt';
 import { RolesGuard } from './auth/guards/Roles.guard';
 import { ReportModule } from './report/report.module';
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigModule } from '@nestjs/config';
 import { GuestModule } from './guest/guest.module';
 import { AdminModule } from './admin/admin.module';
 import { RestaurateurModule } from './restaurateur/restaurateur.module';
 import { MenuModule } from './menu/menu.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { jwtConfig } from './auth/jwt.config';
-import { mongooseConfigFactory } from './mongoose.config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MongooseConfigAsync } from './mongoose.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    MongooseModule.forRootAsync({
-      useFactory: async (configService: ConfigService) =>
-        mongooseConfigFactory(configService),
-      inject: [ConfigService],
-    }),
+    MongooseModule.forRootAsync(MongooseConfigAsync),
     JwtModule.registerAsync(jwtConfig),
     UserModule,
     ReviewModule,
@@ -46,6 +43,7 @@ import { mongooseConfigFactory } from './mongoose.config';
     RestaurateurModule,
     MenuModule,
     EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [
