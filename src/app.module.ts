@@ -24,6 +24,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { jwtConfig } from './auth/jwt.config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MongooseConfigAsync } from './mongoose.config';
+import { ReportCreatedEvent } from "./report/reportCreated.event";
 
 @Module({
   imports: [
